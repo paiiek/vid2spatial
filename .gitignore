@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Results (don't commit large output files)
+results/
+*.foa.wav
+*.wav
+*.mp4
+*.avi
+
+# Weights (commit only small models)
+weights/*.pth
+!weights/ir_predictor.pth
+
+# Test outputs
+out/
+test_data/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Pytest
+.pytest_cache/
+
+# Data (too large for git)
+data/*.mp4
+data/*.wav
+data/*.json
+!data/README.md
