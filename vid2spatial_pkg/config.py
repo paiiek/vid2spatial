@@ -27,8 +27,9 @@ class TrackingConfig:
 @dataclass
 class DepthConfig:
     """Depth estimation configuration."""
-    backend: str = "auto"  # auto, midas, none
+    backend: str = "auto"  # auto, midas, depth_anything_v2, none
     use_adapter: bool = False
+    model_size: str = "small"  # For depth_anything_v2: small, base, large
 
 
 @dataclass

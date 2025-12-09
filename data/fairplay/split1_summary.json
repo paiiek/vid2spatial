@@ -1,0 +1,14 @@
+{
+  "split": 1,
+  "counts": {
+    "train": 1497,
+    "val": 187,
+    "test": 187
+  },
+  "manifests": {
+    "train": "mmhoa/vid2spatial/data/fairplay/split1_train.jsonl",
+    "val": "mmhoa/vid2spatial/data/fairplay/split1_val.jsonl",
+    "test": "mmhoa/vid2spatial/data/fairplay/split1_test.jsonl"
+  },
+  "note": "Paths are placeholders; download FAIR-Play videos.tar.gz and audios.tar.gz and extract under FAIR-Play/{videos,audios}/"
+}

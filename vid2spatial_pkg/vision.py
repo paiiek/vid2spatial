@@ -535,13 +535,15 @@ def initialize_depth_backend(
     # Try Depth Anything V2
     if depth_backend in ("auto", "depth_anything_v2"):
         try:
-            from .depth_anything_adapter import build_depth_predictor
-            depth_fn = build_depth_predictor(
-                backend=depth_backend,
-                model_size="small"
+            from .depth_anything_v2 import create_depth_anything_v2_backend
+            depth_fn = create_depth_anything_v2_backend(
+                model_size="small",
+                device="cuda"
             )
+            print("[info] Using Depth Anything V2 backend")
             return depth_fn, None, None
-        except Exception:
+        except Exception as e:
+            print(f"[warn] Depth Anything V2 failed: {e}, falling back to MiDaS")
             # Continue to MiDaS fallback
             pass
 

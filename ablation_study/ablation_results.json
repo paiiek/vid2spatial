@@ -1,0 +1,80 @@
+{
+  "summary": {},
+  "all_results": [
+    {
+      "sample_id": "000001",
+      "configs": {
+        "1_full_schroeder": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "2_no_ir": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "3_gtmatched_fairplay": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "4_no_depth": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "5_no_smoothing": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        }
+      }
+    },
+    {
+      "sample_id": "000002",
+      "configs": {
+        "1_full_schroeder": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "2_no_ir": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "3_gtmatched_fairplay": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "4_no_depth": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "5_no_smoothing": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        }
+      }
+    },
+    {
+      "sample_id": "000003",
+      "configs": {
+        "1_full_schroeder": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "2_no_ir": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "3_gtmatched_fairplay": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "4_no_depth": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        },
+        "5_no_smoothing": {
+          "success": false,
+          "error": "yolo_bytetrack_traj() got an unexpected keyword argument 'conf'"
+        }
+      }
+    }
+  ]
+}

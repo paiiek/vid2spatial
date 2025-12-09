@@ -1,0 +1,134 @@
+{
+  "manifest": "mmhoa/vid2spatial/data/fairplay/split1_train.jsonl",
+  "mode": "av",
+  "sample": 20,
+  "counts": {
+    "total_read": 20,
+    "audio_available": 0,
+    "video_available": 0
+  },
+  "entries": [
+    {
+      "audio": "FAIR-Play/audios/001257.wav",
+      "video": "FAIR-Play/videos/001257.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000649.wav",
+      "video": "FAIR-Play/videos/000649.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/001397.wav",
+      "video": "FAIR-Play/videos/001397.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000143.wav",
+      "video": "FAIR-Play/videos/000143.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000234.wav",
+      "video": "FAIR-Play/videos/000234.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/001471.wav",
+      "video": "FAIR-Play/videos/001471.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/001817.wav",
+      "video": "FAIR-Play/videos/001817.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000163.wav",
+      "video": "FAIR-Play/videos/000163.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/001752.wav",
+      "video": "FAIR-Play/videos/001752.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000452.wav",
+      "video": "FAIR-Play/videos/000452.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000616.wav",
+      "video": "FAIR-Play/videos/000616.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/001756.wav",
+      "video": "FAIR-Play/videos/001756.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000833.wav",
+      "video": "FAIR-Play/videos/000833.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000102.wav",
+      "video": "FAIR-Play/videos/000102.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/001115.wav",
+      "video": "FAIR-Play/videos/001115.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000440.wav",
+      "video": "FAIR-Play/videos/000440.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000191.wav",
+      "video": "FAIR-Play/videos/000191.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/001128.wav",
+      "video": "FAIR-Play/videos/001128.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000441.wav",
+      "video": "FAIR-Play/videos/000441.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    },
+    {
+      "audio": "FAIR-Play/audios/000955.wav",
+      "video": "FAIR-Play/videos/000955.mp4",
+      "audio_exists": false,
+      "video_exists": false
+    }
+  ],
+  "elapsed_sec": 0.00010728836059570312,
+  "note": "Availability check only. For metrics, provide trajectory JSON and use evaluate.py."
+}
