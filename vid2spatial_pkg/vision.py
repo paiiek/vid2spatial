@@ -392,11 +392,15 @@ def initialize_tracking(
 
     if method == "kcf":
         return _initialize_kcf_tracking(
-            video_path, first, init_bbox, get_fallback_bbox
+            video_path, first, init_bbox, get_fallback_bbox, sample_stride
         )
     elif method == "yolo":
         return _initialize_yolo_tracking(
-            video_path, first, cls_name, select_track_id, init_bbox, get_fallback_bbox
+            video_path, first, cls_name, select_track_id, init_bbox, get_fallback_bbox, sample_stride
+        )
+    elif method == "ostrack":
+        return _initialize_ostrack_tracking(
+            video_path, first, init_bbox, get_fallback_bbox, sample_stride
         )
     elif method == "sam2":
         return _initialize_sam2_tracking(
@@ -412,6 +416,7 @@ def _initialize_kcf_tracking(
     first_frame: np.ndarray,
     init_bbox: Optional[Tuple[int, int, int, int]],
     get_fallback_bbox: Callable,
+    sample_stride: int = 1,
 ) -> List[Dict]:
     """Initialize KCF tracking."""
     if init_bbox is None:
@@ -427,9 +432,9 @@ def _initialize_kcf_tracking(
             tr = tracker()
             tr.init(first_frame, init_bbox)
         # Use template matching for full sequence (deterministic)
-        return tm_track(video_path, init_bbox)
+        return tm_track(video_path, init_bbox, sample_stride)
     except Exception:
-        return tm_track(video_path, init_bbox)
+        return tm_track(video_path, init_bbox, sample_stride)
 
 
 def _initialize_yolo_tracking(
@@ -439,10 +444,11 @@ def _initialize_yolo_tracking(
     select_track_id: Optional[int],
     init_bbox: Optional[Tuple[int, int, int, int]],
     get_fallback_bbox: Callable,
+    sample_stride: int = 1,
 ) -> List[Dict]:
     """Initialize YOLO + ByteTrack tracking."""
     traj_2d = yolo_bytetrack_traj(
-        video_path, cls_name=cls_name, conf=0.25, select_track_id=select_track_id
+        video_path, cls_name=cls_name, conf=0.25, select_track_id=select_track_id, sample_stride=sample_stride
     )
 
     if not traj_2d:
@@ -454,6 +460,28 @@ def _initialize_yolo_tracking(
         traj_2d = tm_track(video_path, init_bbox)
 
     return traj_2d
+
+
+def _initialize_ostrack_tracking(
+    video_path: str,
+    first_frame: np.ndarray,
+    init_bbox: Optional[Tuple[int, int, int, int]],
+    get_fallback_bbox: Callable,
+    sample_stride: int = 1,
+) -> List[Dict]:
+    """Initialize OSTrack tracking."""
+    if init_bbox is None:
+        init_bbox = auto_init_bbox(first_frame)
+        if init_bbox is None:
+            init_bbox = get_fallback_bbox()
+
+    try:
+        from .ostrack_wrapper import track_with_ostrack
+        print("[info] Using OSTrack tracker...")
+        return track_with_ostrack(video_path, init_bbox, sample_stride)
+    except Exception as e:
+        print(f"[warn] OSTrack failed: {e}, falling back to template matching")
+        return tm_track(video_path, init_bbox, sample_stride)
 
 
 def _initialize_sam2_tracking(

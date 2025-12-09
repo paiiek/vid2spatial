@@ -16,12 +16,13 @@ class CameraConfig:
 @dataclass
 class TrackingConfig:
     """Object tracking configuration."""
-    method: str = "yolo"  # yolo, kcf, sam2
+    method: str = "yolo"  # yolo, kcf, ostrack, sam2
     class_name: str = "person"
     select_track_id: Optional[int] = None
     init_bbox: Optional[Tuple[int, int, int, int]] = None
     fallback_center_if_no_bbox: bool = False
     smooth_alpha: float = 0.2
+    ostrack_checkpoint: Optional[str] = None  # Custom OSTrack checkpoint path
 
 
 @dataclass
