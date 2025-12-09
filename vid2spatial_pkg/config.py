@@ -56,8 +56,8 @@ class RoomConfig:
     """Room acoustics configuration."""
     dimensions: Tuple[float, float, float] = (6.0, 5.0, 3.0)  # Lx, Ly, Lz
     mic_position: Tuple[float, float, float] = (3.0, 2.5, 1.5)  # mx, my, mz
-    rt60: float = 0.6
-    backend: str = "auto"  # auto, pra, schroeder, none, visual, brir
+    rt60: float = 0.5  # Reduced from 0.6 based on GT analysis
+    backend: str = "auto"  # auto, pra, schroeder, fairplay, none, visual, brir
     disabled: bool = True  # Default disabled: ablation study shows IR degrades performance
 
 

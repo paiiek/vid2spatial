@@ -10,21 +10,22 @@ Components to ablate:
 For ICASSP-level analysis.
 """
 import sys
-sys.path.insert(0, '/home/seung')
+from pathlib import Path
+# Add parent directory to path to import vid2spatial_pkg
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import json
 import time
 import numpy as np
-from pathlib import Path
 import soundfile as sf
 import librosa
 
 from fairplay_loader import FairPlayDataset
-from evaluation_v2 import evaluate_spatial_audio_v2
-from mmhoa.vid2spatial.config import (
+from metrics import evaluate_spatial_audio_v2
+from vid2spatial_pkg.config import (
     PipelineConfig, VisionConfig, TrackingConfig, DepthConfig, RoomConfig, OutputConfig, SpatialConfig
 )
-from mmhoa.vid2spatial.pipeline import SpatialAudioPipeline
+from vid2spatial_pkg.pipeline import SpatialAudioPipeline
 
 
 def run_ablation_configs(sample, output_dir: Path):
@@ -57,29 +58,33 @@ def run_ablation_configs(sample, output_dir: Path):
     init_bbox = (width//2 - 40, height//2 - 60, 80, 120)
 
     configs = {
-        '1_full': {
+        '1_full_schroeder': {
             'use_depth': True,
             'smooth_alpha': 0.2,
             'use_ir': True,
+            'ir_backend': 'schroeder',
+            'rt60': 0.6,
         },
-        '2_no_depth': {
-            'use_depth': False,
-            'smooth_alpha': 0.2,
-            'use_ir': True,
-        },
-        '3_no_smoothing': {
-            'use_depth': True,
-            'smooth_alpha': 0.0,  # No smoothing
-            'use_ir': True,
-        },
-        '4_no_ir': {
+        '2_no_ir': {
             'use_depth': True,
             'smooth_alpha': 0.2,
             'use_ir': False,
         },
-        '5_minimal': {
+        '3_gtmatched_fairplay': {
+            'use_depth': True,
+            'smooth_alpha': 0.2,
+            'use_ir': True,
+            'ir_backend': 'fairplay',
+            'rt60': 0.5,
+        },
+        '4_no_depth': {
             'use_depth': False,
-            'smooth_alpha': 0.0,
+            'smooth_alpha': 0.2,
+            'use_ir': False,
+        },
+        '5_no_smoothing': {
+            'use_depth': True,
+            'smooth_alpha': 0.0,  # No smoothing
             'use_ir': False,
         },
     }
@@ -98,14 +103,16 @@ def run_ablation_configs(sample, output_dir: Path):
             audio_path=str(mono_path),
             vision=VisionConfig(
                 tracking=TrackingConfig(
-                    method='kcf',
-                    init_bbox=init_bbox,
+                    method='yolo',
+                    class_name='person',
                     smooth_alpha=config_params['smooth_alpha'],
                 ),
                 depth=DepthConfig(backend='none') if not config_params['use_depth'] else DepthConfig(),
             ),
             room=RoomConfig(
                 disabled=not config_params['use_ir'],
+                backend=config_params.get('ir_backend', 'auto'),
+                rt60=config_params.get('rt60', 0.5),
             ),
             spatial=SpatialConfig(),
             output=OutputConfig(

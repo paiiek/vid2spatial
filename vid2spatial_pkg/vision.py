@@ -10,18 +10,331 @@ import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Dict, Callable
 
-from .vision import (
-    CameraIntrinsics,
-    pixel_to_ray,
-    ray_to_angles,
-    tm_track,
-    auto_init_bbox,
-    yolo_bytetrack_traj,
-    refine_center_grabcut,
-    smooth_series,
-    estimate_depth,
-    _load_midas,
-)
+# Basic helper classes and functions
+# (Previously these were imported from a separate module, now defined inline)
+
+@dataclass
+class CameraIntrinsics:
+    """Camera intrinsic parameters for 3D projection."""
+    width: int
+    height: int
+    fov_deg: float
+
+    @property
+    def focal_length(self) -> float:
+        """Compute focal length from FOV."""
+        return (self.width / 2.0) / np.tan(np.radians(self.fov_deg / 2.0))
+
+    @property
+    def cx(self) -> float:
+        """Principal point x-coordinate."""
+        return self.width / 2.0
+
+    @property
+    def cy(self) -> float:
+        """Principal point y-coordinate."""
+        return self.height / 2.0
+
+
+def pixel_to_ray(px: float, py: float, K: CameraIntrinsics) -> np.ndarray:
+    """Convert pixel coordinates to normalized 3D ray."""
+    x = (px - K.cx) / K.focal_length
+    y = (py - K.cy) / K.focal_length
+    z = 1.0
+    ray = np.array([x, y, z], dtype=np.float32)
+    return ray / np.linalg.norm(ray)
+
+
+def ray_to_angles(ray: np.ndarray) -> Tuple[float, float]:
+    """Convert 3D ray to azimuth and elevation angles."""
+    x, y, z = ray
+    az = np.arctan2(x, z)  # Azimuth
+    el = np.arcsin(y)  # Elevation
+    return float(az), float(el)
+
+
+def smooth_series(series: np.ndarray, alpha: float = 0.2) -> np.ndarray:
+    """Apply exponential moving average smoothing."""
+    if len(series) == 0:
+        return series
+    smoothed = np.zeros_like(series)
+    smoothed[0] = series[0]
+    for i in range(1, len(series)):
+        smoothed[i] = alpha * series[i] + (1 - alpha) * smoothed[i-1]
+    return smoothed
+
+
+def _load_midas():
+    """Load MiDaS depth estimation model."""
+    try:
+        import torch
+        model_type = "DPT_Large"
+        midas = torch.hub.load("intel-isl/MiDaS", model_type)
+        midas.eval()
+
+        midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
+        transform = midas_transforms.dpt_transform
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        midas.to(device)
+
+        return midas, transform, device
+    except Exception as e:
+        print(f"[warn] MiDaS load failed: {e}")
+        return None, None, None
+
+
+def estimate_depth(frame: np.ndarray, midas_bundle: Optional[tuple] = None) -> np.ndarray:
+    """Estimate depth map from frame."""
+    if midas_bundle is None:
+        # Return dummy depth map
+        h, w = frame.shape[:2]
+        return np.ones((h, w), dtype=np.float32) * 0.5
+
+    model, transform, device = midas_bundle
+    if model is None:
+        h, w = frame.shape[:2]
+        return np.ones((h, w), dtype=np.float32) * 0.5
+
+    import torch
+    img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    input_batch = transform(img).to(device)
+
+    with torch.no_grad():
+        prediction = model(input_batch)
+        prediction = torch.nn.functional.interpolate(
+            prediction.unsqueeze(1),
+            size=frame.shape[:2],
+            mode="bicubic",
+            align_corners=False,
+        ).squeeze()
+
+    depth = prediction.cpu().numpy()
+    # Normalize to [0, 1]
+    depth = (depth - depth.min()) / (depth.max() - depth.min() + 1e-8)
+    return depth
+
+
+def auto_init_bbox(frame: np.ndarray, cls_name: str = "person", fallback_center: bool = False) -> Optional[Tuple[int, int, int, int]]:
+    """Auto-initialize bounding box using YOLO detection."""
+    try:
+        from ultralytics import YOLO
+        model = YOLO("yolo11n.pt")
+        results = model(frame, verbose=False)
+
+        for r in results:
+            boxes = r.boxes
+            for box in boxes:
+                cls_id = int(box.cls[0])
+                cls_name_detected = model.names[cls_id]
+                if cls_name_detected.lower() == cls_name.lower():
+                    x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                    x, y, w, h = int(x1), int(y1), int(x2-x1), int(y2-y1)
+                    return (x, y, w, h)
+    except Exception as e:
+        print(f"[warn] YOLO auto-init failed: {e}")
+
+    if fallback_center:
+        h, w = frame.shape[:2]
+        box_w, box_h = w // 4, h // 4
+        return (w//2 - box_w//2, h//2 - box_h//2, box_w, box_h)
+
+    return None
+
+
+def tm_track(video_path: str, init_bbox: Tuple[int, int, int, int], sample_stride: int = 1) -> List[Dict]:
+    """Track object using KCF tracker."""
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise RuntimeError(f"Failed to open video: {video_path}")
+
+    tracker = cv2.TrackerKCF_create()
+    traj = []
+
+    fidx = 0
+    initialized = False
+
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            break
+
+        if (fidx % sample_stride) != 0:
+            fidx += 1
+            continue
+
+        if not initialized:
+            tracker.init(frame, init_bbox)
+            x, y, w, h = init_bbox
+            traj.append({"frame": fidx, "x": x, "y": y, "w": w, "h": h})
+            initialized = True
+        else:
+            ok, bbox = tracker.update(frame)
+            if ok:
+                x, y, w, h = [int(v) for v in bbox]
+                traj.append({"frame": fidx, "x": x, "y": y, "w": w, "h": h})
+            else:
+                # Tracking failed, use last known bbox
+                if traj:
+                    last = traj[-1]
+                    traj.append({"frame": fidx, "x": last["x"], "y": last["y"], "w": last["w"], "h": last["h"]})
+
+        fidx += 1
+
+    cap.release()
+    return traj
+
+
+def yolo_bytetrack_traj(video_path: str, cls_name: str = "person",
+                        select_track_id: Optional[int] = None,
+                        sample_stride: int = 1,
+                        conf: float = 0.25) -> List[Dict]:
+    """Track object using YOLO + ByteTrack."""
+    try:
+        from ultralytics import YOLO
+        model = YOLO("yolo11n.pt")
+
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise RuntimeError(f"Failed to open video: {video_path}")
+
+        traj = []
+        fidx = 0
+
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                break
+
+            if (fidx % sample_stride) != 0:
+                fidx += 1
+                continue
+
+            results = model.track(frame, persist=True, verbose=False, conf=conf)
+
+            for r in results:
+                if r.boxes is None or r.boxes.id is None:
+                    continue
+
+                boxes = r.boxes
+                for i, box in enumerate(boxes):
+                    cls_id = int(box.cls[0])
+                    cls_name_detected = model.names[cls_id]
+
+                    if cls_name_detected.lower() != cls_name.lower():
+                        continue
+
+                    track_id = int(box.id[0])
+
+                    if select_track_id is not None and track_id != select_track_id:
+                        continue
+
+                    x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                    x, y, w, h = int(x1), int(y1), int(x2-x1), int(y2-y1)
+
+                    traj.append({
+                        "frame": fidx,
+                        "x": x,
+                        "y": y,
+                        "w": w,
+                        "h": h,
+                        "track_id": track_id
+                    })
+
+                    if select_track_id is not None:
+                        break
+
+            fidx += 1
+
+        cap.release()
+        return traj
+
+    except Exception as e:
+        print(f"[error] YOLO tracking failed: {e}")
+        raise
+
+
+def refine_center_grabcut(frame: np.ndarray, bbox: Tuple[int, int, int, int]) -> Tuple[float, float]:
+    """Refine object center using GrabCut segmentation."""
+    x, y, w, h = bbox
+
+    # Ensure bbox is within frame
+    h_frame, w_frame = frame.shape[:2]
+    x = max(0, min(x, w_frame - 1))
+    y = max(0, min(y, h_frame - 1))
+    w = max(1, min(w, w_frame - x))
+    h = max(1, min(h, h_frame - y))
+
+    try:
+        mask = np.zeros(frame.shape[:2], np.uint8)
+        bgd_model = np.zeros((1, 65), np.float64)
+        fgd_model = np.zeros((1, 65), np.float64)
+
+        rect = (x, y, w, h)
+        cv2.grabCut(frame, mask, rect, bgd_model, fgd_model, 5, cv2.GC_INIT_WITH_RECT)
+
+        mask2 = np.where((mask == 2) | (mask == 0), 0, 1).astype('uint8')
+
+        # Find center of mass
+        M = cv2.moments(mask2)
+        if M["m00"] > 0:
+            cx = M["m10"] / M["m00"]
+            cy = M["m01"] / M["m00"]
+            return float(cx), float(cy)
+    except Exception as e:
+        pass
+
+    # Fallback to bbox center
+    return float(x + w/2), float(y + h/2)
+
+
+# Placeholder for compute_trajectory_3d (basic version)
+def compute_trajectory_3d(
+    video_path: str,
+    init_bbox: Optional[Tuple[int, int, int, int]] = None,
+    fov_deg: float = 60.0,
+    depth_scale_m: Tuple[float, float] = (1.0, 3.0),
+    use_midas: bool = True,
+    sample_stride: int = 1,
+    method: str = "yolo",
+    cls_name: str = "person",
+    refine_center: bool = False,
+    refine_center_method: str = "grabcut",
+    depth_backend: str = "auto",
+    sam2_mask_fn: Optional[Callable] = None,
+    depth_fn: Optional[Callable] = None,
+    fallback_center_if_no_bbox: bool = False,
+    select_track_id: Optional[int] = None,
+    smooth_alpha: float = 0.2,
+    sam2_model_id: Optional[str] = None,
+    sam2_cfg: Optional[str] = None,
+    sam2_ckpt: Optional[str] = None,
+) -> Dict:
+    """
+    Basic implementation of compute_trajectory_3d.
+    Uses compute_trajectory_3d_refactored for actual processing.
+    """
+    return compute_trajectory_3d_refactored(
+        video_path=video_path,
+        init_bbox=init_bbox,
+        fov_deg=fov_deg,
+        depth_scale_m=depth_scale_m,
+        use_midas=use_midas,
+        sample_stride=sample_stride,
+        method=method,
+        cls_name=cls_name,
+        refine_center=refine_center,
+        refine_center_method=refine_center_method,
+        depth_backend=depth_backend,
+        sam2_mask_fn=sam2_mask_fn,
+        depth_fn=depth_fn,
+        fallback_center_if_no_bbox=fallback_center_if_no_bbox,
+        select_track_id=select_track_id,
+        smooth_alpha=smooth_alpha,
+        sam2_model_id=sam2_model_id,
+        sam2_cfg=sam2_cfg,
+        sam2_ckpt=sam2_ckpt,
+    )
 
 
 # ============================================================================

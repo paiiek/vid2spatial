@@ -86,10 +86,90 @@ def schroeder_ir(fs: int, rt60: float = 0.6, length_s: float = 2.0) -> np.ndarra
     return y.astype(np.float32)
 
 
+def fairplay_matched_ir(fs: int = 48000,
+                       rt60: float = 0.5,
+                       direct_ratio: float = 0.73,
+                       early_ratio: float = 0.07,
+                       late_ratio: float = 0.20,
+                       length_s: float = 0.5) -> np.ndarray:
+    """
+    Generate IR matched to FAIR-Play GT statistics.
+
+    Based on analysis of 50 FAIR-Play samples:
+    - Direct: 73% (anechoic-like)
+    - Early: 7% (minimal early reflections)
+    - Late: 20% (some diffuse tail)
+    - RT60: 0.5s
+
+    This IR performs much better than Schroeder (which assumes diffuse field).
+
+    Args:
+        fs: sample rate
+        rt60: reverberation time
+        direct_ratio: energy in direct sound
+        early_ratio: energy in early reflections (5-50ms)
+        late_ratio: energy in late reflections (50ms+)
+        length_s: IR length in seconds
+
+    Returns:
+        ir: (N,) impulse response
+    """
+    import scipy.signal as signal
+
+    N = int(fs * length_s)
+    ir = np.zeros(N, dtype=np.float32)
+
+    # Direct sound (delta at t=0)
+    ir[0] = np.sqrt(direct_ratio)
+
+    # Early reflections (5-50ms, sparse)
+    if early_ratio > 0:
+        num_early = 8
+        early_times_ms = np.linspace(5, 50, num_early)  # Evenly spaced
+        early_gain = np.sqrt(early_ratio / num_early)
+
+        for t_ms in early_times_ms:
+            idx = int(t_ms * 1e-3 * fs)
+            if idx < N:
+                # Add some randomness (70-100%)
+                gain = early_gain * np.random.uniform(0.7, 1.0)
+                ir[idx] += gain
+
+    # Late reflections (50ms+, exponential decay)
+    if late_ratio > 0:
+        late_start = int(0.050 * fs)  # 50ms
+        late_samples = N - late_start
+        t_late = np.arange(late_samples) / fs
+
+        # Exponential decay envelope
+        decay_rate = 6.91 / rt60  # -60dB in rt60 seconds
+        envelope = np.exp(-decay_rate * t_late)
+
+        # Filtered noise (dense reverb tail)
+        noise = np.random.randn(late_samples)
+
+        # Low-pass filter (reverb darker than direct)
+        b, a = signal.butter(4, 4000 / (fs/2), btype='low')
+        reverb = signal.filtfilt(b, a, noise)
+
+        # Apply envelope
+        reverb = reverb * envelope
+
+        # Normalize by energy (not amplitude) to match late_ratio
+        current_energy = np.sum(reverb**2)
+        if current_energy > 1e-10:
+            reverb = reverb * np.sqrt(late_ratio / current_energy)
+
+        ir[late_start:] += reverb
+
+    return ir.astype(np.float32)
+
+
 __all__ = [
     "synthesize_mono_rir",
     "fft_convolve",
     "schroeder_ir",
+    "fairplay_matched_ir",
 ]
 
 

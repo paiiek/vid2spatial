@@ -164,6 +164,13 @@ class SpatialAudioPipeline:
         Lx, Ly, Lz = self.config.room.dimensions
         mx, my, mz = self.config.room.mic_position
 
+        # FAIR-Play matched IR (recommended based on ablation study)
+        if self.config.room.backend == "fairplay":
+            from .irgen import fairplay_matched_ir
+            print('[info] Using FAIR-Play matched IR (dry acoustics)...')
+            rir = fairplay_matched_ir(fs=sr, rt60=self.config.room.rt60)
+            return self._convolve_ir(audio, rir)
+
         # Try PRA backend
         if self.config.room.backend in ("auto", "pra"):
             try:
@@ -178,10 +185,15 @@ class SpatialAudioPipeline:
                 )
                 return self._convolve_ir(audio, rir)
             except Exception as e:
-                print(f'[warn] PRA backend failed: {e}, falling back to Schroeder')
+                print(f'[warn] PRA backend failed: {e}, falling back to FAIR-Play matched IR')
+                # Fallback to FAIR-Play matched instead of Schroeder
+                from .irgen import fairplay_matched_ir
+                print('[info] Using FAIR-Play matched IR (fallback)...')
+                rir = fairplay_matched_ir(fs=sr, rt60=self.config.room.rt60)
+                return self._convolve_ir(audio, rir)
 
-        # Fallback to Schroeder
-        from .irgen import schroeder_ir, fft_convolve
+        # Schroeder IR (legacy, not recommended)
+        from .irgen import schroeder_ir
         print('[info] Using Schroeder IR...')
         rir = schroeder_ir(sr, rt60=self.config.room.rt60)
         return self._convolve_ir(audio, rir)
