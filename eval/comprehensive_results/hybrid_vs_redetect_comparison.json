@@ -1,0 +1,234 @@
+{
+  "synthetic_oscillating": {
+    "sam2": {
+      "jerk_avg": 0.03709214898496777,
+      "jerk_max": 1.9121408733152259,
+      "dir_changes_az": 5,
+      "dir_changes_el": 5,
+      "total_frames": 150,
+      "high_conf_pct": 91.33333333333333,
+      "amplitude_x_px": 7.5,
+      "amplitude_y_px": 3.25,
+      "fps": 12.323927377427387,
+      "num_frames": 150,
+      "time_sec": 12.171444654464722,
+      "amplitude_ratio": 0.033548342848364124,
+      "mae_px": 142.92512180103313,
+      "velocity_correlation": -0.08808355805189769
+    },
+    "redetect": {
+      "jerk_avg": 0.21375329609483523,
+      "jerk_max": 1.90610942941192,
+      "dir_changes_az": 7,
+      "dir_changes_el": 12,
+      "total_frames": 150,
+      "high_conf_pct": 100.0,
+      "amplitude_x_px": 219.0,
+      "amplitude_y_px": 1.4210854715202004e-14,
+      "fps": 23.603430776935532,
+      "num_frames": 150,
+      "time_sec": 6.355008363723755,
+      "amplitude_ratio": 0.9796116111722325,
+      "mae_px": 11.09069667660567,
+      "velocity_correlation": 0.9582399250107477
+    },
+    "hybrid_ema": {
+      "jerk_avg": 1.4197381292858784,
+      "jerk_max": 10.749313989643074,
+      "dir_changes_az": 26,
+      "dir_changes_el": 37,
+      "total_frames": 150,
+      "high_conf_pct": 58.666666666666664,
+      "amplitude_x_px": 213.82137315896784,
+      "amplitude_y_px": 20.842397126474793,
+      "fps": 9.306595710312044,
+      "num_frames": 150,
+      "time_sec": 16.11760139465332,
+      "amplitude_ratio": 0.9564470313393408,
+      "mae_px": 66.81041804484335,
+      "velocity_correlation": 0.5245120676831845
+    },
+    "hybrid_kalman": {
+      "jerk_avg": 5.168626538111881,
+      "jerk_max": 35.431793482632656,
+      "dir_changes_az": 57,
+      "dir_changes_el": 57,
+      "total_frames": 150,
+      "high_conf_pct": 58.666666666666664,
+      "amplitude_x_px": 238.21108260161668,
+      "amplitude_y_px": 37.14584513702498,
+      "fps": 9.26020518102941,
+      "num_frames": 150,
+      "time_sec": 16.198345184326172,
+      "amplitude_ratio": 1.0655449425865364,
+      "mae_px": 53.23287812979839,
+      "velocity_correlation": 0.2654271452251933
+    }
+  },
+  "real_videos": {
+    "marker_hd": {
+      "sam2": {
+        "jerk_avg": 0.05231021181921204,
+        "jerk_max": 3.426685416027901,
+        "dir_changes_az": 5,
+        "dir_changes_el": 10,
+        "total_frames": 150,
+        "high_conf_pct": 94.0,
+        "amplitude_x_px": 18.75,
+        "amplitude_y_px": 5.5,
+        "fps": 11.583531043979043,
+        "num_frames": 150,
+        "time_sec": 12.949419260025024
+      },
+      "redetect": {
+        "jerk_avg": 0.0682271197142652,
+        "jerk_max": 0.5853711175321905,
+        "dir_changes_az": 4,
+        "dir_changes_el": 5,
+        "total_frames": 150,
+        "high_conf_pct": 8.0,
+        "amplitude_x_px": 323.0,
+        "amplitude_y_px": 162.25,
+        "fps": 19.387818306505753,
+        "num_frames": 150,
+        "time_sec": 7.736816883087158
+      },
+      "hybrid_ema": {
+        "jerk_avg": 0.21037168499126868,
+        "jerk_max": 1.437104244769241,
+        "dir_changes_az": 4,
+        "dir_changes_el": 6,
+        "total_frames": 150,
+        "high_conf_pct": 60.66666666666667,
+        "amplitude_x_px": 324.01310296303274,
+        "amplitude_y_px": 157.94577514606397,
+        "fps": 8.042469444378504,
+        "num_frames": 150,
+        "time_sec": 18.65098786354065
+      }
+    },
+    "daw_hd": {
+      "sam2": {
+        "jerk_avg": 0.005906742947839673,
+        "jerk_max": 0.09119327070342464,
+        "dir_changes_az": 18,
+        "dir_changes_el": 21,
+        "total_frames": 150,
+        "high_conf_pct": 0.0,
+        "amplitude_x_px": 0.5,
+        "amplitude_y_px": 0.25,
+        "fps": 12.441089796860686,
+        "num_frames": 150,
+        "time_sec": 12.056821584701538
+      },
+      "redetect": {
+        "jerk_avg": 0.0012450342955940845,
+        "jerk_max": 0.018221237158300596,
+        "dir_changes_az": 15,
+        "dir_changes_el": 18,
+        "total_frames": 150,
+        "high_conf_pct": 0.0,
+        "amplitude_x_px": 0.5,
+        "amplitude_y_px": 0.5,
+        "fps": 19.57199269477224,
+        "num_frames": 150,
+        "time_sec": 7.664012670516968
+      },
+      "hybrid_ema": {
+        "jerk_avg": 0.013551292784761415,
+        "jerk_max": 0.05528013604750015,
+        "dir_changes_az": 64,
+        "dir_changes_el": 58,
+        "total_frames": 150,
+        "high_conf_pct": 0.0,
+        "amplitude_x_px": 0.9796524467753898,
+        "amplitude_y_px": 0.5994910422990074,
+        "fps": 8.018728229857729,
+        "num_frames": 150,
+        "time_sec": 18.70620822906494
+      }
+    },
+    "basketball_dribble": {
+      "sam2": {
+        "jerk_avg": 0.052179009116028637,
+        "jerk_max": 16.464888164178582,
+        "dir_changes_az": 0,
+        "dir_changes_el": 109,
+        "total_frames": 424,
+        "high_conf_pct": 100.0,
+        "amplitude_x_px": 0.0,
+        "amplitude_y_px": 65.0,
+        "fps": 13.652266854798917,
+        "num_frames": 424,
+        "time_sec": 31.05711340904236
+      },
+      "redetect": {
+        "jerk_avg": 0.09844732249240756,
+        "jerk_max": 2.23703380224633,
+        "dir_changes_az": 43,
+        "dir_changes_el": 26,
+        "total_frames": 424,
+        "high_conf_pct": 77.83018867924528,
+        "amplitude_x_px": 101.75,
+        "amplitude_y_px": 49.5,
+        "fps": 20.555725190275,
+        "num_frames": 424,
+        "time_sec": 20.626856803894043
+      },
+      "hybrid_ema": {
+        "jerk_avg": 0.07984709982615697,
+        "jerk_max": 3.4640811286205313,
+        "dir_changes_az": 49,
+        "dir_changes_el": 55,
+        "total_frames": 424,
+        "high_conf_pct": 98.58490566037736,
+        "amplitude_x_px": 102.89655936790848,
+        "amplitude_y_px": 50.96207158135371,
+        "fps": 8.50300563290179,
+        "num_frames": 424,
+        "time_sec": 49.864720582962036
+      }
+    },
+    "dance_breakdance": {
+      "sam2": {
+        "jerk_avg": 0.2625134972855662,
+        "jerk_max": 22.52981184052571,
+        "dir_changes_az": 84,
+        "dir_changes_el": 299,
+        "total_frames": 959,
+        "high_conf_pct": 99.16579770594369,
+        "amplitude_x_px": 186.5,
+        "amplitude_y_px": 122.5,
+        "fps": 13.675739734745145,
+        "num_frames": 959,
+        "time_sec": 70.1241774559021
+      },
+      "redetect": {
+        "jerk_avg": 0.18049072630852483,
+        "jerk_max": 3.642676488151201,
+        "dir_changes_az": 77,
+        "dir_changes_el": 78,
+        "total_frames": 959,
+        "high_conf_pct": 96.35036496350365,
+        "amplitude_x_px": 273.75,
+        "amplitude_y_px": 99.0,
+        "fps": 21.0799793513197,
+        "num_frames": 959,
+        "time_sec": 45.49340319633484
+      },
+      "hybrid_ema": {
+        "jerk_avg": 0.15024512240935534,
+        "jerk_max": 5.513788028255984,
+        "dir_changes_az": 132,
+        "dir_changes_el": 118,
+        "total_frames": 959,
+        "high_conf_pct": 99.27007299270073,
+        "amplitude_x_px": 268.03651512648537,
+        "amplitude_y_px": 96.25479707785357,
+        "fps": 8.555426814962155,
+        "num_frames": 959,
+        "time_sec": 112.09259581565857
+      }
+    }
+  }
+}

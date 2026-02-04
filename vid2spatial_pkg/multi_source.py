@@ -3,11 +3,12 @@ Multi-source spatial audio extension.
 
 Extends Vid2Spatial to handle 2-3 simultaneous sound sources:
 - Track multiple objects in video
-- Separate audio sources (externally provided or estimated)
+- Estimate metric depth for each object
 - Encode each source to FOA independently
 - Mix FOA streams to create multi-source spatial audio
 """
 import numpy as np
+import cv2
 from typing import List, Dict, Optional, Tuple
 import soundfile as sf
 
@@ -22,9 +23,10 @@ def track_multiple_sources(
     track_ids: Optional[List[int]] = None,
     fov_deg: float = 60.0,
     sample_stride: int = 1,
+    scene_type: str = "auto",
 ) -> List[Dict]:
     """
-    Track multiple objects in video and compute 3D trajectories.
+    Track multiple objects in video and compute 3D trajectories with metric depth.
 
     Args:
         video_path: Path to input video
@@ -33,6 +35,7 @@ def track_multiple_sources(
         track_ids: Specific track IDs to select for each source
         fov_deg: Camera horizontal FOV in degrees
         sample_stride: Frame sampling stride
+        scene_type: Scene type for depth estimation ('indoor', 'outdoor', 'auto')
 
     Returns:
         List of trajectory dicts, one per source:
@@ -48,8 +51,6 @@ def track_multiple_sources(
     if track_ids is None:
         track_ids = [None] * num_sources
 
-    import cv2
-
     # Get video dimensions
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -57,9 +58,24 @@ def track_multiple_sources(
 
     W = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     H = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
 
     K = CameraIntrinsics(width=W, height=H, fov_deg=fov_deg)
+
+    # Initialize metric depth estimator
+    depth_estimator = None
+    try:
+        from .depth_metric import MetricDepthEstimator
+        depth_estimator = MetricDepthEstimator(
+            scene_type=scene_type,
+            model_size="small",
+            device="cuda",
+        )
+        print(f"[multi-source] Loaded MetricDepthEstimator (scene_type={scene_type})")
+    except Exception as e:
+        print(f"[multi-source] Warning: MetricDepthEstimator failed: {e}")
+        print("[multi-source] Falling back to bbox-based depth heuristic")
 
     # Track all objects with YOLO
     print(f"[multi-source] Tracking {num_sources} sources...")
@@ -94,6 +110,12 @@ def track_multiple_sources(
     selected_track_ids = [tid for tid, _ in sorted_tracks[:num_sources]]
     print(f"[multi-source] Selected track IDs: {selected_track_ids}")
 
+    # Re-open video for depth estimation
+    cap = cv2.VideoCapture(video_path)
+
+    # Build frame index for quick lookup
+    frame_cache = {}
+
     # Compute 3D trajectory for each source
     trajectories = []
 
@@ -104,25 +126,46 @@ def track_multiple_sources(
         # Convert 2D trajectory to 3D
         frames_3d = []
         for rec in traj_2d:
+            frame_idx = rec["frame"]
             cx = rec["x"] + rec["w"] / 2
             cy = rec["y"] + rec["h"] / 2
 
-            # Simple depth estimation (constant for now)
-            depth_rel = 0.5  # Mid-range
+            # Get frame for depth estimation
+            if depth_estimator is not None:
+                if frame_idx not in frame_cache:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+                    ret, frame = cap.read()
+                    if ret:
+                        frame_cache[frame_idx] = frame
+                    else:
+                        frame_cache[frame_idx] = None
+
+                frame = frame_cache.get(frame_idx)
+
+                if frame is not None:
+                    # Use metric depth estimator
+                    dist_m = depth_estimator.infer_at_point(
+                        frame, cx, cy,
+                        bbox_size=(rec["w"], rec["h"]),
+                        method="median"
+                    )
+                    # Clamp to reasonable range
+                    dist_m = float(np.clip(dist_m, 0.3, 50.0))
+                else:
+                    dist_m = 2.0  # Fallback
+            else:
+                # Fallback: bbox-based heuristic (less accurate)
+                bbox_area = rec["w"] * rec["h"]
+                frame_area = W * H
+                relative_size = bbox_area / frame_area
+                # Map relative size [0.001, 0.1] to distance [5.0, 1.0] meters
+                dist_m = float(np.clip(5.0 / (relative_size * 50 + 0.1), 1.0, 5.0))
 
             # Pixel to ray
             ray = pixel_to_ray(cx, cy, K)
 
             # Ray to angles
             az, el = ray_to_angles(ray)
-
-            # Estimate distance (simple heuristic based on bbox size)
-            # Larger bbox = closer object
-            bbox_area = rec["w"] * rec["h"]
-            frame_area = W * H
-            relative_size = bbox_area / frame_area
-            # Map relative size [0.001, 0.1] to distance [3.0, 1.0] meters
-            dist_m = np.clip(3.0 / (relative_size * 30 + 0.1), 1.0, 3.0)
 
             # 3D position
             x = ray[0] * dist_m
@@ -145,6 +188,11 @@ def track_multiple_sources(
             "intrinsics": {"width": W, "height": H, "fov_deg": fov_deg},
             "frames": frames_3d
         })
+
+    cap.release()
+
+    # Clear frame cache to free memory
+    frame_cache.clear()
 
     return trajectories
 
@@ -182,8 +230,14 @@ def encode_multi_source_foa(
         # Interpolate trajectory to audio timeline
         az_s, el_s, dist_s = interpolate_angles_distance(traj["frames"], T=T, sr=sr)
 
+        # Apply distance-based gain (inverse square law)
+        # Reference distance: 1m
+        ref_dist = 1.0
+        gain = ref_dist / np.clip(dist_s, 0.3, 50.0)
+        audio_with_distance = audio * gain
+
         # Encode to FOA
-        foa = encode_mono_to_foa(audio, az_s, el_s)
+        foa = encode_mono_to_foa(audio_with_distance, az_s, el_s)
 
         # Mix into combined FOA
         foa_mixed[:, :T] += foa
@@ -198,6 +252,7 @@ def process_multi_source_video(
     num_sources: int = 2,
     fov_deg: float = 60.0,
     output_path: str = "multi_source.foa.wav",
+    scene_type: str = "auto",
 ) -> Dict:
     """
     End-to-end multi-source spatial audio from video.
@@ -209,6 +264,7 @@ def process_multi_source_video(
         num_sources: Number of sources to track
         fov_deg: Camera FOV
         output_path: Output FOA file path
+        scene_type: Scene type for depth estimation ('indoor', 'outdoor', 'auto')
 
     Returns:
         Result dict with trajectories and output info
@@ -217,14 +273,20 @@ def process_multi_source_video(
     print("Multi-Source Spatial Audio Processing")
     print("="*60)
 
-    # Track multiple sources
+    # Track multiple sources with metric depth
     trajectories = track_multiple_sources(
         video_path=video_path,
         num_sources=num_sources,
-        fov_deg=fov_deg
+        fov_deg=fov_deg,
+        scene_type=scene_type,
     )
 
     print(f"\n[multi-source] Tracked {len(trajectories)} sources")
+
+    # Print depth statistics
+    for traj in trajectories:
+        depths = [f["dist_m"] for f in traj["frames"]]
+        print(f"  Source {traj['source_id']}: depth range {min(depths):.2f}m - {max(depths):.2f}m (mean: {np.mean(depths):.2f}m)")
 
     # Encode to FOA
     foa_mixed = encode_multi_source_foa(

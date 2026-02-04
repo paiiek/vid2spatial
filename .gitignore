@@ -26,13 +26,14 @@ results/
 *.mp4
 *.avi
 
-# Weights (commit only small models)
-weights/*.pth
-!weights/ir_predictor.pth
+# Weights (large models - download separately)
+weights/
 
 # Test outputs
 out/
 test_data/
+test_outputs/
+test_videos/
 
 # Logs
 *.log
@@ -48,7 +49,11 @@ test_data/
 .pytest_cache/
 
 # Data (too large for git)
-data/*.mp4
-data/*.wav
-data/*.json
+data/
 !data/README.md
+
+# Archive (not needed for repo)
+archive/
+
+# WandB
+wandb/

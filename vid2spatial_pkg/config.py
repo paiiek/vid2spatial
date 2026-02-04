@@ -16,13 +16,31 @@ class CameraConfig:
 @dataclass
 class TrackingConfig:
     """Object tracking configuration."""
-    method: str = "yolo"  # yolo, kcf, ostrack, sam2
+    method: str = "yolo"  # yolo, kcf, ostrack, sam2, color, point, skeleton
     class_name: str = "person"
     select_track_id: Optional[int] = None
     init_bbox: Optional[Tuple[int, int, int, int]] = None
     fallback_center_if_no_bbox: bool = False
     smooth_alpha: float = 0.2
     ostrack_checkpoint: Optional[str] = None  # Custom OSTrack checkpoint path
+
+    # Color tracking (for hand-drawn sketches, colored markers)
+    target_color: Optional[Tuple[int, int, int]] = None  # BGR color (e.g., (255,0,0) for red)
+    color_tolerance: int = 30  # HSV tolerance for color matching
+    color_min_area: int = 100  # Minimum blob area in pixels
+
+    # Point tracking (for cursor, laser pointer, etc.)
+    point_method: str = "brightness"  # brightness, template, goodfeatures
+    point_min_brightness: int = 200  # Minimum brightness (0-255)
+    point_template_path: Optional[str] = None  # Template image path
+    point_template_threshold: float = 0.7  # Template matching threshold
+    point_use_optical_flow: bool = True  # Use optical flow for tracking
+
+    # Skeleton tracking (for motion capture, dance, etc.)
+    skeleton_joint: str = "right_wrist"  # nose, left_wrist, right_wrist, left_ankle, etc.
+    skeleton_backend: str = "mediapipe"  # mediapipe (only backend supported currently)
+    skeleton_min_visibility: float = 0.5  # Minimum joint visibility (0-1)
+    skeleton_smooth_alpha: float = 0.3  # Smoothing factor (0=max smooth, 1=no smooth)
 
 
 @dataclass

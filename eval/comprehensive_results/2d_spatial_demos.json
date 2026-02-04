@@ -1,0 +1,22 @@
+{
+  "oscillating_demo": {
+    "sam2": {
+      "frames": 150,
+      "trajectory_file": "oscillating_demo_sam2_trajectory.json"
+    },
+    "dino_k5": {
+      "frames": 150,
+      "trajectory_file": "oscillating_demo_dino_k5_trajectory.json"
+    }
+  },
+  "daw_marker_demo": {
+    "sam2": {
+      "frames": 150,
+      "trajectory_file": "daw_marker_demo_sam2_trajectory.json"
+    },
+    "dino_k5": {
+      "frames": 150,
+      "trajectory_file": "daw_marker_demo_dino_k5_trajectory.json"
+    }
+  }
+}

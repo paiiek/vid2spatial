@@ -249,12 +249,105 @@ def encode_many_to_foa(monolist: List[np.ndarray], az_list: List[np.ndarray], el
     return acc.astype(np.float32)
 
 
+def render_foa_from_trajectory(
+    audio_path: str,
+    trajectory: Dict,
+    output_path: str,
+    *,
+    smooth_ms: float = 50.0,
+    dist_gain_k: float = 1.0,
+    dist_lpf_min_hz: float = 800.0,
+    dist_lpf_max_hz: float = 8000.0,
+    apply_reverb: bool = False,
+    rt60: float = 0.5,
+    output_stereo: bool = True,
+) -> Dict:
+    """
+    Render mono audio to FOA using trajectory from tracking.
+
+    Args:
+        audio_path: Path to mono or stereo audio file (will be mixed to mono)
+        trajectory: Dict with 'frames' list containing {frame, az, el, dist_m} per frame
+        output_path: Output FOA wav path (4-channel)
+        smooth_ms: Smoothing window for angle interpolation
+        dist_gain_k: Distance gain exponent
+        dist_lpf_min_hz: Min LPF cutoff for far objects
+        dist_lpf_max_hz: Max LPF cutoff for near objects
+        apply_reverb: Whether to apply distance-based reverb
+        rt60: Reverb time if apply_reverb=True
+        output_stereo: Also output stereo/binaural version
+
+    Returns:
+        Dict with output file paths and metadata
+    """
+    import os
+
+    # Load audio
+    audio, sr = sf.read(audio_path, dtype='float32')
+    if audio.ndim == 2:
+        # Mix to mono
+        audio = audio.mean(axis=1)
+    T = audio.shape[0]
+
+    # Get trajectory frames
+    frames = trajectory.get("frames", [])
+    if not frames:
+        raise ValueError("Empty trajectory frames")
+
+    # Interpolate angles and distance to audio sample rate
+    az_s, el_s, dist_s = interpolate_angles_distance(frames, T, sr)
+
+    # Apply smoothing
+    az_s, el_s = smooth_limit_angles(az_s, el_s, sr, smooth_ms=smooth_ms)
+
+    # Apply distance-based gain and LPF
+    audio_proc = apply_distance_gain_lpf(
+        audio, sr, dist_s,
+        gain_k=dist_gain_k,
+        lpf_min_hz=dist_lpf_min_hz,
+        lpf_max_hz=dist_lpf_max_hz,
+    )
+
+    # Encode to FOA
+    foa = encode_mono_to_foa(audio_proc, az_s, el_s)
+
+    # Apply reverb if requested
+    if apply_reverb:
+        wet_curve = build_wet_curve_from_dist_occ(dist_s)
+        foa = apply_timevarying_reverb_foa(foa, sr, wet_curve, rt60=rt60)
+
+    # Write FOA
+    write_foa_wav(output_path, foa, sr)
+
+    result = {
+        "foa_path": output_path,
+        "sample_rate": sr,
+        "duration_sec": T / sr,
+        "num_frames": len(frames),
+    }
+
+    # Output stereo/binaural version
+    if output_stereo:
+        stereo_path = output_path.replace(".wav", "_stereo.wav").replace(".foa", "")
+        if stereo_path == output_path:
+            stereo_path = output_path.replace(".wav", "_stereo.wav")
+
+        stereo = foa_to_binaural(foa, sr)
+        sf.write(stereo_path, stereo.T, sr, subtype="FLOAT")
+        result["stereo_path"] = stereo_path
+
+    return result
+
+
 __all__ = [
     "dir_to_foa_acn_sn3d_gains",
     "interpolate_angles",
     "encode_mono_to_foa",
     "write_foa_wav",
     "encode_many_to_foa",
+    "render_foa_from_trajectory",
+    "foa_to_stereo",
+    "foa_to_binaural",
 ]
 
 

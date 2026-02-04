@@ -1,0 +1,18 @@
+{
+  "sam2": {
+    "depth_min": 1.5582916736602783,
+    "depth_max": 2.006601333618164,
+    "depth_mean": 1.7579133796691895,
+    "depth_std": 0.10855198168670535,
+    "depth_jerk_avg": 0.014891876817560771,
+    "depth_discontinuities": 0
+  },
+  "dino_k5": {
+    "depth_min": 1.425196647644043,
+    "depth_max": 2.030751943588257,
+    "depth_mean": 1.7317158555984498,
+    "depth_std": 0.12508144108207508,
+    "depth_jerk_avg": 0.01566761172547664,
+    "depth_discontinuities": 0
+  }
+}

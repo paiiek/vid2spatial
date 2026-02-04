@@ -137,7 +137,40 @@ class SpatialAudioPipeline:
             select_track_id=self.config.vision.tracking.select_track_id,
             smooth_alpha=self.config.vision.tracking.smooth_alpha,
             fallback_center_if_no_bbox=self.config.vision.tracking.fallback_center_if_no_bbox,
+            target_color=self.config.vision.tracking.target_color,
+            color_tolerance=self.config.vision.tracking.color_tolerance,
+            color_min_area=self.config.vision.tracking.color_min_area,
+            point_method=self.config.vision.tracking.point_method,
+            point_min_brightness=self.config.vision.tracking.point_min_brightness,
+            point_template_path=self.config.vision.tracking.point_template_path,
+            point_template_threshold=self.config.vision.tracking.point_template_threshold,
+            point_use_optical_flow=self.config.vision.tracking.point_use_optical_flow,
+            skeleton_joint=self.config.vision.tracking.skeleton_joint,
+            skeleton_backend=self.config.vision.tracking.skeleton_backend,
+            skeleton_min_visibility=self.config.vision.tracking.skeleton_min_visibility,
+            skeleton_smooth_alpha=self.config.vision.tracking.skeleton_smooth_alpha,
         )
+
+        # Apply Kalman filter temporal smoothing
+        if getattr(self.config.spatial, 'use_kalman_smoothing', True):
+            print('[info] Applying Kalman filter temporal smoothing...')
+            from .temporal_smoother import smooth_trajectory_batch
+
+            # Get FPS from video
+            import cv2
+            cap = cv2.VideoCapture(self.config.video_path)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            cap.release()
+
+            if fps <= 0:
+                fps = 30.0  # Default fallback
+
+            traj['frames'] = smooth_trajectory_batch(
+                traj['frames'],
+                fps=fps,
+                process_noise=0.01,
+                measurement_noise=0.1
+            )
 
         # Save if requested
         if self.config.output.trajectory_path:
@@ -367,14 +400,14 @@ class SpatialAudioPipeline:
             if self.config.output.binaural_config.mode == "sofa":
                 if not self.config.output.binaural_config.sofa_path:
                     print('[warn] SOFA mode requires --sofa path, falling back to crossfeed')
-                    binaural = foa_to_binaural(foa)
+                    binaural = foa_to_binaural(foa, sr)
                 else:
                     binaural = foa_to_binaural_sofa(
                         foa, sr,
                         self.config.output.binaural_config.sofa_path
                     )
             else:
-                binaural = foa_to_binaural(foa)
+                binaural = foa_to_binaural(foa, sr)
 
             import soundfile as sf
             sf.write(self.config.output.binaural_path, binaural.T, sr)

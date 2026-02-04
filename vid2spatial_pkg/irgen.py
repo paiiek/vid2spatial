@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Tuple, Optional
+from pathlib import Path
 
 
 def synthesize_mono_rir(room_dim: Tuple[float, float, float],

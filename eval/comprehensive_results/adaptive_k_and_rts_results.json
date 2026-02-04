@@ -1,0 +1,83 @@
+{
+  "adaptive_k_synthetic": {
+    "redetect_k5": {
+      "jerk_avg": 0.21375329609483523,
+      "dir_changes_az": 7,
+      "amplitude_x_px": 219.0,
+      "num_frames": 150,
+      "mae_px": 11.090696676605669,
+      "velocity_correlation": 0.9582399250107483,
+      "amplitude_ratio": 0.9796116111722327,
+      "fps": 18.774922866055366,
+      "time_sec": 7.989380359649658
+    },
+    "adaptive_k": {
+      "jerk_avg": 0.1948157761524867,
+      "dir_changes_az": 7,
+      "amplitude_x_px": 223.5,
+      "num_frames": 150,
+      "mae_px": 16.10627200982893,
+      "velocity_correlation": 0.9302516702225254,
+      "amplitude_ratio": 0.9997406168812512,
+      "fps": 34.62278210954622,
+      "time_sec": 4.332407474517822
+    }
+  },
+  "rts_smoother": {
+    "raw_jerk_avg": 0.0005430591088358541,
+    "rts_jerk_avg": 1.8459440205816745e-05,
+    "jerk_reduction_pct": 96.60084143595567,
+    "raw_dir_changes": 7,
+    "rts_dir_changes": 2
+  },
+  "adaptive_k_real": {
+    "marker_hd": {
+      "redetect_k5": {
+        "jerk_avg": 0.0682271197142652,
+        "dir_changes_az": 4,
+        "amplitude_x_px": 323.0,
+        "num_frames": 150,
+        "fps": 19.527900432618264
+      },
+      "adaptive_k": {
+        "jerk_avg": 0.06408765917424587,
+        "dir_changes_az": 3,
+        "amplitude_x_px": 325.0,
+        "num_frames": 150,
+        "fps": 34.40937372259468
+      }
+    },
+    "daw_hd": {
+      "redetect_k5": {
+        "jerk_avg": 0.0012450342955940845,
+        "dir_changes_az": 15,
+        "amplitude_x_px": 0.5,
+        "num_frames": 150,
+        "fps": 19.576072312024518
+      },
+      "adaptive_k": {
+        "jerk_avg": 0.00023334156470545235,
+        "dir_changes_az": 10,
+        "amplitude_x_px": 0.5,
+        "num_frames": 150,
+        "fps": 47.31481739127819
+      }
+    },
+    "basketball_dribble": {
+      "redetect_k5": {
+        "jerk_avg": 0.09844732249240756,
+        "dir_changes_az": 43,
+        "amplitude_x_px": 101.75,
+        "num_frames": 424,
+        "fps": 20.950995930024774
+      },
+      "adaptive_k": {
+        "jerk_avg": 0.035112290412820095,
+        "dir_changes_az": 18,
+        "amplitude_x_px": 97.0,
+        "num_frames": 424,
+        "fps": 53.99222182369326
+      }
+    }
+  }
+}

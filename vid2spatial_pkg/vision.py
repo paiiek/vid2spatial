@@ -143,16 +143,15 @@ def auto_init_bbox(frame: np.ndarray, cls_name: str = "person", fallback_center:
 
 
 def tm_track(video_path: str, init_bbox: Tuple[int, int, int, int], sample_stride: int = 1) -> List[Dict]:
-    """Track object using KCF tracker."""
+    """Track object using simple template matching."""
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         raise RuntimeError(f"Failed to open video: {video_path}")
 
-    tracker = cv2.TrackerKCF_create()
     traj = []
-
     fidx = 0
-    initialized = False
+    template = None
+    x, y, w, h = init_bbox
 
     while True:
         ok, frame = cap.read()
@@ -163,21 +162,35 @@ def tm_track(video_path: str, init_bbox: Tuple[int, int, int, int], sample_strid
             fidx += 1
             continue
 
-        if not initialized:
-            tracker.init(frame, init_bbox)
-            x, y, w, h = init_bbox
-            traj.append({"frame": fidx, "x": x, "y": y, "w": w, "h": h})
-            initialized = True
+        if template is None:
+            # Initialize with first frame
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            template = gray[y:y+h, x:x+w]
+            cx, cy = x + w // 2, y + h // 2
+            traj.append({"frame": fidx, "x": x, "y": y, "w": w, "h": h, "cx": cx, "cy": cy})
         else:
-            ok, bbox = tracker.update(frame)
-            if ok:
-                x, y, w, h = [int(v) for v in bbox]
-                traj.append({"frame": fidx, "x": x, "y": y, "w": w, "h": h})
-            else:
-                # Tracking failed, use last known bbox
+            # Simple template matching
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            try:
+                result = cv2.matchTemplate(gray, template, cv2.TM_CCOEFF_NORMED)
+                _, max_val, _, max_loc = cv2.minMaxLoc(result)
+
+                if max_val > 0.3:  # Threshold for valid match
+                    x, y = max_loc
+                    cx, cy = x + w // 2, y + h // 2
+                    traj.append({"frame": fidx, "x": x, "y": y, "w": w, "h": h, "cx": cx, "cy": cy})
+                else:
+                    # Keep previous position if match is weak
+                    if traj:
+                        prev = traj[-1]
+                        traj.append({"frame": fidx, "x": prev["x"], "y": prev["y"],
+                                    "w": prev["w"], "h": prev["h"], "cx": prev["cx"], "cy": prev["cy"]})
+            except:
+                # On error, keep previous position
                 if traj:
-                    last = traj[-1]
-                    traj.append({"frame": fidx, "x": last["x"], "y": last["y"], "w": last["w"], "h": last["h"]})
+                    prev = traj[-1]
+                    traj.append({"frame": fidx, "x": prev["x"], "y": prev["y"],
+                                "w": prev["w"], "h": prev["h"], "cx": prev["cx"], "cy": prev["cy"]})
 
         fidx += 1
 
@@ -231,6 +244,7 @@ def yolo_bytetrack_traj(video_path: str, cls_name: str = "person",
 
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     x, y, w, h = int(x1), int(y1), int(x2-x1), int(y2-y1)
+                    cx, cy = x + w // 2, y + h // 2
 
                     traj.append({
                         "frame": fidx,
@@ -238,6 +252,8 @@ def yolo_bytetrack_traj(video_path: str, cls_name: str = "person",
                         "y": y,
                         "w": w,
                         "h": h,
+                        "cx": cx,
+                        "cy": cy,
                         "track_id": track_id
                     })
 
@@ -309,6 +325,18 @@ def compute_trajectory_3d(
     sam2_model_id: Optional[str] = None,
     sam2_cfg: Optional[str] = None,
     sam2_ckpt: Optional[str] = None,
+    target_color: Optional[Tuple[int, int, int]] = None,
+    color_tolerance: int = 30,
+    color_min_area: int = 100,
+    point_method: str = "brightness",
+    point_min_brightness: int = 200,
+    point_template_path: Optional[str] = None,
+    point_template_threshold: float = 0.7,
+    point_use_optical_flow: bool = True,
+    skeleton_joint: str = "right_wrist",
+    skeleton_backend: str = "mediapipe",
+    skeleton_min_visibility: float = 0.5,
+    skeleton_smooth_alpha: float = 0.3,
 ) -> Dict:
     """
     Basic implementation of compute_trajectory_3d.
@@ -334,6 +362,18 @@ def compute_trajectory_3d(
         sam2_model_id=sam2_model_id,
         sam2_cfg=sam2_cfg,
         sam2_ckpt=sam2_ckpt,
+        target_color=target_color,
+        color_tolerance=color_tolerance,
+        color_min_area=color_min_area,
+        point_method=point_method,
+        point_min_brightness=point_min_brightness,
+        point_template_path=point_template_path,
+        point_template_threshold=point_template_threshold,
+        point_use_optical_flow=point_use_optical_flow,
+        skeleton_joint=skeleton_joint,
+        skeleton_backend=skeleton_backend,
+        skeleton_min_visibility=skeleton_min_visibility,
+        skeleton_smooth_alpha=skeleton_smooth_alpha,
     )
 
 
@@ -352,6 +392,7 @@ def initialize_tracking(
     sam2_model_id: Optional[str] = None,
     sam2_cfg: Optional[str] = None,
     sam2_ckpt: Optional[str] = None,
+    **kwargs  # Additional tracker-specific parameters (e.g., target_color, color_tolerance)
 ) -> List[Dict]:
     """
     Initialize tracking and return 2D trajectory.
@@ -406,6 +447,38 @@ def initialize_tracking(
         return _initialize_sam2_tracking(
             video_path, first, init_bbox, cls_name, select_track_id,
             sample_stride, sam2_model_id, sam2_cfg, sam2_ckpt, get_fallback_bbox
+        )
+    elif method == "color":
+        # Color tracking requires target_color from config
+        # Use default red if not provided
+        target_color = kwargs.get("target_color")
+        if target_color is None:
+            target_color = (0, 0, 255)  # Default red in BGR
+        color_tolerance = kwargs.get("color_tolerance", 30)
+        color_min_area = kwargs.get("color_min_area", 100)
+        return _initialize_color_tracking(
+            video_path, target_color, color_tolerance, color_min_area, sample_stride
+        )
+    elif method == "point":
+        # Point tracking for cursor, laser pointer, etc.
+        point_method = kwargs.get("point_method", "brightness")
+        point_min_brightness = kwargs.get("point_min_brightness", 200)
+        point_template_path = kwargs.get("point_template_path")
+        point_template_threshold = kwargs.get("point_template_threshold", 0.7)
+        point_use_optical_flow = kwargs.get("point_use_optical_flow", True)
+        return _initialize_point_tracking(
+            video_path, point_method, point_min_brightness, point_template_path,
+            point_template_threshold, point_use_optical_flow, sample_stride
+        )
+    elif method == "skeleton":
+        # Skeleton tracking for motion capture, dance, etc.
+        skeleton_joint = kwargs.get("skeleton_joint", "right_wrist")
+        skeleton_backend = kwargs.get("skeleton_backend", "mediapipe")
+        skeleton_min_visibility = kwargs.get("skeleton_min_visibility", 0.5)
+        skeleton_smooth_alpha = kwargs.get("skeleton_smooth_alpha", 0.3)
+        return _initialize_skeleton_tracking(
+            video_path, skeleton_joint, skeleton_backend, skeleton_min_visibility,
+            skeleton_smooth_alpha, sample_stride
         )
     else:
         raise ValueError(f"Unknown tracking method: {method}")
@@ -532,35 +605,171 @@ def _initialize_sam2_tracking(
         return traj_2d
 
 
+def _initialize_color_tracking(
+    video_path: str,
+    target_color: Tuple[int, int, int],
+    color_tolerance: int,
+    color_min_area: int,
+    sample_stride: int,
+) -> List[Dict]:
+    """
+    Initialize color-based tracking.
+
+    Args:
+        video_path: Path to video
+        target_color: Target color in BGR format (e.g., (255, 0, 0) for red)
+        color_tolerance: HSV tolerance for color matching
+        color_min_area: Minimum blob area in pixels
+        sample_stride: Frame sampling stride
+
+    Returns:
+        Trajectory list
+    """
+    from .color_tracker import color_track
+    return color_track(
+        video_path=video_path,
+        target_color=target_color,
+        color_tolerance=color_tolerance,
+        min_area=color_min_area,
+        sample_stride=sample_stride,
+        verbose=False
+    )
+
+
+def _initialize_point_tracking(
+    video_path: str,
+    point_method: str,
+    point_min_brightness: int,
+    point_template_path: Optional[str],
+    point_template_threshold: float,
+    point_use_optical_flow: bool,
+    sample_stride: int,
+) -> List[Dict]:
+    """
+    Initialize point-based tracking (cursor, laser pointer).
+
+    Args:
+        video_path: Path to video
+        point_method: Detection method ("brightness", "template", "goodfeatures")
+        point_min_brightness: Minimum brightness for bright point detection
+        point_template_path: Path to cursor template image (for template method)
+        point_template_threshold: Template matching threshold
+        point_use_optical_flow: Use optical flow for tracking
+        sample_stride: Frame sampling stride
+
+    Returns:
+        Trajectory list
+    """
+    from .point_tracker import point_track
+    return point_track(
+        video_path=video_path,
+        method=point_method,
+        min_brightness=point_min_brightness,
+        template_path=point_template_path,
+        template_threshold=point_template_threshold,
+        sample_stride=sample_stride,
+        use_optical_flow=point_use_optical_flow,
+        verbose=False
+    )
+
+
+def _initialize_skeleton_tracking(
+    video_path: str,
+    skeleton_joint: str,
+    skeleton_backend: str,
+    skeleton_min_visibility: float,
+    skeleton_smooth_alpha: float,
+    sample_stride: int,
+) -> List[Dict]:
+    """
+    Initialize skeleton-based tracking (motion capture, dance).
+
+    Args:
+        video_path: Path to video
+        skeleton_joint: Joint to track (e.g., "right_wrist", "nose", "left_ankle")
+        skeleton_backend: Pose estimation backend ("mediapipe")
+        skeleton_min_visibility: Minimum joint visibility threshold (0-1)
+        skeleton_smooth_alpha: Smoothing factor (0=max smooth, 1=no smooth)
+        sample_stride: Frame sampling stride
+
+    Returns:
+        Trajectory list
+    """
+    from .skeleton_tracker import skeleton_track
+    return skeleton_track(
+        video_path=video_path,
+        joint_name=skeleton_joint,
+        backend=skeleton_backend,
+        min_visibility=skeleton_min_visibility,
+        sample_stride=sample_stride,
+        smooth_alpha=skeleton_smooth_alpha,
+        verbose=False
+    )
+
+
 # ============================================================================
 # Depth Estimation
 # ============================================================================
+
+# Global metric depth estimator (singleton for efficiency)
+_METRIC_DEPTH_ESTIMATOR = None
+
+
+def get_metric_depth_estimator(scene_type: str = "auto", model_size: str = "small", device: str = "cuda"):
+    """Get or create singleton metric depth estimator."""
+    global _METRIC_DEPTH_ESTIMATOR
+    if _METRIC_DEPTH_ESTIMATOR is None:
+        try:
+            from .depth_metric import MetricDepthEstimator
+            _METRIC_DEPTH_ESTIMATOR = MetricDepthEstimator(
+                scene_type=scene_type,
+                model_size=model_size,
+                device=device,
+            )
+        except Exception as e:
+            print(f"[warn] Failed to load MetricDepthEstimator: {e}")
+            _METRIC_DEPTH_ESTIMATOR = None
+    return _METRIC_DEPTH_ESTIMATOR
+
 
 def initialize_depth_backend(
     depth_backend: str,
     use_midas: bool = True,
     depth_fn: Optional[Callable[[np.ndarray], np.ndarray]] = None,
-) -> Tuple[Optional[Callable], Optional[tuple], Optional[object]]:
+    scene_type: str = "auto",
+) -> Tuple[Optional[Callable], Optional[tuple], bool]:
     """
     Initialize depth estimation backend.
 
     Args:
-        depth_backend: Backend choice ('auto', 'midas', 'depth_anything_v2')
-        use_midas: Whether to use MiDaS
+        depth_backend: Backend choice ('auto', 'metric', 'midas', 'depth_anything_v2')
+                       'metric' and 'auto' now use Metric Depth (returns meters)
+        use_midas: Whether to use MiDaS as fallback
         depth_fn: Custom depth function
+        scene_type: Scene type for metric depth ('indoor', 'outdoor', 'auto')
 
     Returns:
-        Tuple of (depth_fn, midas_bundle, depth_anything)
+        Tuple of (depth_fn, midas_bundle, is_metric)
+        is_metric: True if depth_fn returns meters directly, False if relative [0,1]
     """
     if depth_fn is not None:
-        # User provided custom depth function
-        return depth_fn, None, None
+        # User provided custom depth function - assume it's relative unless specified
+        return depth_fn, None, False
 
-    # Try to load depth backends
-    midas_bundle = None
-    depth_anything = None
+    # Try Metric Depth (preferred - returns actual meters)
+    if depth_backend in ("auto", "metric"):
+        try:
+            from .depth_metric import MetricDepthEstimator
+            estimator = get_metric_depth_estimator(scene_type=scene_type, model_size="small", device="cuda")
+            if estimator is not None and estimator.model is not None:
+                def metric_depth_fn(image: np.ndarray) -> np.ndarray:
+                    return estimator.infer(image)
+                print(f"[info] Using Metric Depth backend (scene_type={scene_type}) - returns meters")
+                return metric_depth_fn, None, True
+        except Exception as e:
+            print(f"[warn] Metric Depth failed: {e}, falling back to relative depth")
 
-    # Try Depth Anything V2
+    # Try Depth Anything V2 (relative depth)
     if depth_backend in ("auto", "depth_anything_v2"):
         try:
             from .depth_anything_v2 import create_depth_anything_v2_backend
@@ -568,22 +777,23 @@ def initialize_depth_backend(
                 model_size="small",
                 device="cuda"
             )
-            print("[info] Using Depth Anything V2 backend")
-            return depth_fn, None, None
+            print("[info] Using Depth Anything V2 backend (relative depth)")
+            return depth_fn, None, False
         except Exception as e:
             print(f"[warn] Depth Anything V2 failed: {e}, falling back to MiDaS")
-            # Continue to MiDaS fallback
-            pass
 
-    # Load MiDaS
+    # Load MiDaS (relative depth)
     if depth_backend in ("auto", "midas") and use_midas:
         try:
             device = "cuda" if cv2.cuda.getCudaEnabledDeviceCount() > 0 else "cpu"
             midas_bundle = _load_midas(device)
+            print("[info] Using MiDaS backend (relative depth)")
+            return None, midas_bundle, False
         except Exception:
-            midas_bundle = None
+            pass
 
-    return None, midas_bundle, None
+    print("[warn] No depth backend available, using fallback")
+    return None, None, False
 
 
 def estimate_depth_at_bbox(
@@ -594,9 +804,10 @@ def estimate_depth_at_bbox(
     h: float,
     depth_fn: Optional[Callable],
     midas_bundle: Optional[tuple],
-) -> float:
+    is_metric: bool = False,
+) -> Tuple[float, bool]:
     """
-    Estimate relative depth at bounding box center.
+    Estimate depth at bounding box center.
 
     Args:
         frame: Input frame (BGR)
@@ -604,9 +815,12 @@ def estimate_depth_at_bbox(
         w, h: Bounding box size
         depth_fn: Custom depth function
         midas_bundle: MiDaS model bundle
+        is_metric: Whether depth_fn returns meters directly
 
     Returns:
-        Relative depth value in [0, 1]
+        Tuple of (depth_value, is_metric)
+        - If is_metric=True: depth in meters
+        - If is_metric=False: relative depth [0, 1]
     """
     H, W = frame.shape[:2]
 
@@ -615,23 +829,31 @@ def estimate_depth_at_bbox(
         try:
             dmap = depth_fn(frame)
             dmap = dmap.astype(np.float32)
-            dmap -= dmap.min()
-            if dmap.max() > 1e-8:
-                dmap /= dmap.max()
-            return _extract_depth_from_bbox(dmap, cx, cy, w, h, W, H)
-        except Exception:
-            return 0.5
 
-    # Use MiDaS if available
+            if is_metric:
+                # Metric depth - extract directly without normalization
+                depth_val = _extract_depth_from_bbox_raw(dmap, cx, cy, w, h, W, H)
+                return depth_val, True
+            else:
+                # Relative depth - normalize to [0, 1]
+                dmap -= dmap.min()
+                if dmap.max() > 1e-8:
+                    dmap /= dmap.max()
+                return _extract_depth_from_bbox_raw(dmap, cx, cy, w, h, W, H), False
+        except Exception as e:
+            print(f"[warn] Depth estimation failed: {e}")
+            return 2.0 if is_metric else 0.5, is_metric
+
+    # Use MiDaS if available (relative depth)
     if midas_bundle is not None:
         dmap = estimate_depth(frame, midas_bundle)
-        return _extract_depth_from_bbox(dmap, cx, cy, w, h, W, H)
+        return _extract_depth_from_bbox_raw(dmap, cx, cy, w, h, W, H), False
 
     # Default fallback
-    return 0.5
+    return 2.0, True  # Default 2 meters
 
 
-def _extract_depth_from_bbox(
+def _extract_depth_from_bbox_raw(
     dmap: np.ndarray,
     cx: float,
     cy: float,
@@ -640,7 +862,7 @@ def _extract_depth_from_bbox(
     W: int,
     H: int,
 ) -> float:
-    """Extract median depth from bounding box region."""
+    """Extract median depth from bounding box region (no normalization)."""
     x0 = max(0, int(cx - w * 0.25))
     y0 = max(0, int(cy - h * 0.25))
     x1 = min(W, int(cx + w * 0.25))
@@ -719,18 +941,20 @@ def refine_object_center(
 def compute_3d_position(
     cx: float,
     cy: float,
-    depth_rel: float,
+    depth_value: float,
     K: CameraIntrinsics,
     depth_scale_m: Tuple[float, float],
+    is_metric: bool = False,
 ) -> Tuple[float, float, float, float, float, float]:
     """
     Compute 3D position from 2D center and depth.
 
     Args:
         cx, cy: Center coordinates in pixels
-        depth_rel: Relative depth [0, 1]
+        depth_value: Depth value (meters if is_metric=True, else relative [0,1])
         K: Camera intrinsics
-        depth_scale_m: (near, far) metric depth range
+        depth_scale_m: (near, far) metric depth range (only used if is_metric=False)
+        is_metric: Whether depth_value is already in meters
 
     Returns:
         Tuple of (az, el, dist_m, x, y, z)
@@ -739,9 +963,14 @@ def compute_3d_position(
     ray = pixel_to_ray(cx, cy, K)
     az, el = ray_to_angles(ray)
 
-    # Map relative depth to metric distance
-    near, far = depth_scale_m
-    dist_m = near + (1.0 - depth_rel) * (far - near)
+    # Get distance in meters
+    if is_metric:
+        # Direct metric depth - use as-is
+        dist_m = float(np.clip(depth_value, 0.3, 50.0))  # Clip to reasonable range
+    else:
+        # Map relative depth to metric distance (legacy heuristic)
+        near, far = depth_scale_m
+        dist_m = near + (1.0 - depth_value) * (far - near)
 
     # Compute 3D position
     pos = ray * dist_m
@@ -765,6 +994,7 @@ def process_trajectory_frames(
     refine_center: bool,
     refine_center_method: str,
     sam2_mask_fn: Optional[Callable],
+    is_metric: bool = False,
 ) -> List[Dict]:
     """
     Process video frames to compute 3D trajectory.
@@ -776,10 +1006,11 @@ def process_trajectory_frames(
         sample_stride: Frame sampling stride
         depth_fn: Depth estimation function
         midas_bundle: MiDaS model bundle
-        depth_scale_m: Depth scale range
+        depth_scale_m: Depth scale range (only used if is_metric=False)
         refine_center: Whether to refine centers
         refine_center_method: Refinement method
         sam2_mask_fn: SAM2 mask function
+        is_metric: Whether depth_fn returns meters directly
 
     Returns:
         List of 3D trajectory frames
@@ -818,13 +1049,13 @@ def process_trajectory_frames(
         )
 
         # Estimate depth
-        depth_rel = estimate_depth_at_bbox(
-            frame, cx, cy, rec["w"], rec["h"], depth_fn, midas_bundle
+        depth_value, depth_is_metric = estimate_depth_at_bbox(
+            frame, cx, cy, rec["w"], rec["h"], depth_fn, midas_bundle, is_metric
         )
 
         # Compute 3D position
         az, el, dist_m, x, y, z = compute_3d_position(
-            cx, cy, depth_rel, K, depth_scale_m
+            cx, cy, depth_value, K, depth_scale_m, is_metric=depth_is_metric
         )
 
         result_frames.append({
@@ -904,6 +1135,18 @@ def compute_trajectory_3d_refactored(
     sam2_model_id: Optional[str] = None,
     sam2_cfg: Optional[str] = None,
     sam2_ckpt: Optional[str] = None,
+    target_color: Optional[Tuple[int, int, int]] = None,
+    color_tolerance: int = 30,
+    color_min_area: int = 100,
+    point_method: str = "brightness",
+    point_min_brightness: int = 200,
+    point_template_path: Optional[str] = None,
+    point_template_threshold: float = 0.7,
+    point_use_optical_flow: bool = True,
+    skeleton_joint: str = "right_wrist",
+    skeleton_backend: str = "mediapipe",
+    skeleton_min_visibility: float = 0.5,
+    skeleton_smooth_alpha: float = 0.3,
 ) -> Dict:
     """
     Track a single object and estimate a time-sequenced 3D trajectory.
@@ -918,7 +1161,7 @@ def compute_trajectory_3d_refactored(
         depth_scale_m: (near, far) metric depth range in meters
         use_midas: Whether to use MiDaS for depth estimation
         sample_stride: Process every Nth frame
-        method: Tracking method ('yolo', 'kcf', 'sam2')
+        method: Tracking method ('yolo', 'kcf', 'sam2', 'color', 'point', 'skeleton')
         cls_name: Object class name for YOLO
         refine_center: Whether to refine object centers
         refine_center_method: Center refinement method ('grabcut', 'sam2')
@@ -931,6 +1174,18 @@ def compute_trajectory_3d_refactored(
         sam2_model_id: SAM2 model identifier
         sam2_cfg: SAM2 config path
         sam2_ckpt: SAM2 checkpoint path
+        target_color: Target color for color tracking (BGR format, e.g., (255, 0, 0) for red)
+        color_tolerance: HSV tolerance for color matching (default: 30)
+        color_min_area: Minimum blob area in pixels (default: 100)
+        point_method: Point detection method ('brightness', 'template', 'goodfeatures')
+        point_min_brightness: Minimum brightness for bright point detection (0-255)
+        point_template_path: Path to cursor template image (for template method)
+        point_template_threshold: Template matching threshold (0-1)
+        point_use_optical_flow: Use optical flow for point tracking
+        skeleton_joint: Joint to track for skeleton tracking (e.g., "right_wrist", "nose")
+        skeleton_backend: Pose estimation backend ('mediapipe')
+        skeleton_min_visibility: Minimum joint visibility threshold (0-1)
+        skeleton_smooth_alpha: Smoothing factor for skeleton tracking (0=max smooth, 1=no smooth)
 
     Returns:
         Dict with:
@@ -960,10 +1215,22 @@ def compute_trajectory_3d_refactored(
         sam2_model_id=sam2_model_id,
         sam2_cfg=sam2_cfg,
         sam2_ckpt=sam2_ckpt,
+        target_color=target_color,
+        color_tolerance=color_tolerance,
+        color_min_area=color_min_area,
+        point_method=point_method,
+        point_min_brightness=point_min_brightness,
+        point_template_path=point_template_path,
+        point_template_threshold=point_template_threshold,
+        point_use_optical_flow=point_use_optical_flow,
+        skeleton_joint=skeleton_joint,
+        skeleton_backend=skeleton_backend,
+        skeleton_min_visibility=skeleton_min_visibility,
+        skeleton_smooth_alpha=skeleton_smooth_alpha,
     )
 
     # 3. Initialize depth estimation
-    depth_fn_init, midas_bundle, _ = initialize_depth_backend(
+    depth_fn_init, midas_bundle, is_metric = initialize_depth_backend(
         depth_backend=depth_backend,
         use_midas=use_midas,
         depth_fn=depth_fn,
@@ -985,6 +1252,7 @@ def compute_trajectory_3d_refactored(
         refine_center=refine_center,
         refine_center_method=refine_center_method,
         sam2_mask_fn=sam2_mask_fn,
+        is_metric=is_metric,
     )
 
     # 5. Smooth trajectory
