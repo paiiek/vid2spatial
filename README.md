@@ -1,257 +1,221 @@
 # Vid2Spatial: Video-to-Spatial Audio Generation
 
-**Real-time geometric approach for video-to-spatial audio using depth estimation and object tracking.**
+**Text-guided video object tracking for spatial audio authoring with DINO Adaptive-K re-detection.**
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
 
 ---
 
-## 🎯 Overview
+## Overview
 
-Vid2Spatial generates First-Order Ambisonics (FOA) spatial audio from monaural audio and video input.
+Vid2Spatial extracts spatial trajectories from video using text-guided object detection, then renders First-Order Ambisonics (FOA) spatial audio or streams parameters via OSC to DAW.
 
-**Pipeline**:
-- Input: Video (MP4) + Mono Audio (WAV)
-- Vision: Depth (MiDaS) + Tracking (YOLO/KCF/SAM2)
-- Output: FOA spatial audio (AmbiX: ACN/SN3D, channel order [W,Y,Z,X])
+**Key Innovation**: DINO Adaptive-K re-detection solves SAM2's motion collapse problem at >0.5Hz motion.
 
-**Key Features**:
-- ✅ **Near real-time** (0.91× RTF on RTX 2080 Ti)
-- ✅ **Interpretable pipeline** (geometric, no black-box)
-- ✅ **Modular design** (easy to extend)
-- ✅ **Strong spatial accuracy** (ILD error: 1.91 dB)
+### Pipeline Architecture
+
+```
+Video + Audio Input
+        │
+        ▼
+┌───────────────────────────────────────────────────┐
+│  1. Trajectory Authority                          │
+│     DINO Adaptive K-frame Detection               │
+│     - Fast motion: K=2-3 (frequent detection)     │
+│     - Slow motion: K=10-15 (save compute)         │
+│     + Linear interpolation between keyframes      │
+└───────────────────────────────────────────────────┘
+        │
+        ▼
+┌───────────────────────────────────────────────────┐
+│  2. Robustness Layer                              │
+│     - Confidence gating (conf < 0.35 → reject)    │
+│     - Jump rejection (velocity > 150 px/f → reject)│
+└───────────────────────────────────────────────────┘
+        │
+        ▼
+┌───────────────────────────────────────────────────┐
+│  3. 3D Projection + Depth Estimation              │
+│     pixel (cx, cy) → ray → (az, el) + depth_m     │
+└───────────────────────────────────────────────────┘
+        │
+        ▼
+┌───────────────────────────────────────────────────┐
+│  4. RTS Smoother (offline) / EMA (realtime)       │
+│     → 93-97% jerk reduction                       │
+└───────────────────────────────────────────────────┘
+        │
+        ├──→ (A) FOA Renderer → AmbiX 4ch WAV
+        │
+        └──→ (B) OSC Sender → DAW (az, el, dist, velocity)
+```
 
 ---
 
-## 📊 Performance (FAIR-Play Dataset)
+## Performance Comparison
 
-Evaluated on 20 samples:
+| Aspect | SAM2 | Proposed (Adaptive K + RTS) | Improvement |
+|--------|------|------------------------------|-------------|
+| **Amplitude (0.6Hz)** | 3.4% | **100.0%** | **29x** |
+| **MAE** | 142.9px | **16.1px** | **9x** |
+| **Velocity correlation** | -0.088 | **0.930** | ✅ Recovered |
+| **Jerk (after RTS)** | 0.037* | **0.026** | ✅ Lower |
+| **Real video win-rate** | — | **8/13 (62%)** | ✅ Majority |
+| **FPS** | 13.5 | **26.4** | **2x faster** |
 
-| Metric | Score | Quality |
-|--------|-------|---------|
-| **Correlation** | 0.72 ± 0.11 | Good |
-| **ILD Error** | 1.91 ± 1.14 dB | Excellent |
-| **SI-SDR** | +0.7 ± 3.1 dB | Positive |
-| **RTF** | 0.91× | Near real-time |
-
-See [docs/FAIR_PLAY_EVALUATION_REPORT.md](docs/FAIR_PLAY_EVALUATION_REPORT.md) for details.
+*SAM2's low jerk is misleading — the trajectory has only 3.4% amplitude (near-stationary).
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
 ```bash
-# Clone repository
-git clone https://github.com/YOUR_USERNAME/vid2spatial.git
+git clone https://github.com/paiiek/vid2spatial.git
 cd vid2spatial
-
-# Install dependencies
 pip install -r requirements.txt
+
+# Download model weights (not included in repo)
+# - Grounding DINO
+# - Depth Anything V2
+# - SAM2 (optional, for comparison)
 ```
 
 ### Basic Usage
 
 ```python
-from pipeline import SpatialAudioPipeline
-from config import PipelineConfig, OutputConfig
+from vid2spatial_pkg.hybrid_tracker import HybridTracker
+from vid2spatial_pkg.trajectory_stabilizer import rts_smooth_trajectory
+from vid2spatial_pkg.foa_render import render_foa_from_trajectory
 
-# Configure pipeline
-config = PipelineConfig(
+# 1. Track object in video
+tracker = HybridTracker(device="cuda")
+result = tracker.track(
     video_path="input.mp4",
-    audio_path="input.wav",
-    output=OutputConfig(foa_path="output.foa.wav")
+    text_prompt="person",
+    tracking_method="adaptive_k",
+    estimate_depth=True,
 )
 
-# Run pipeline
-pipeline = SpatialAudioPipeline(config)
-pipeline.process()
+# 2. Get 3D trajectory and smooth
+traj_3d = result.get_trajectory_3d(smooth=False)
+trajectory = rts_smooth_trajectory(traj_3d["frames"])
+
+# 3. Render FOA
+render_foa_from_trajectory(
+    audio_path="input.wav",
+    trajectory=trajectory,
+    output_path="output_foa.wav",
+)
 ```
 
-### Command Line
+### OSC Streaming (DAW Integration)
 
-```bash
-python scripts/run_demo.py \
-    --video input.mp4 \
-    --audio input.wav \
-    --out_foa output.foa.wav \
-    --method kcf \
-    --ir_backend none
+```python
+from vid2spatial_pkg.osc_sender import OSCSpatialSender
+
+sender = OSCSpatialSender(host="127.0.0.1", port=9000)
+sender.connect()
+sender.stream_trajectory(trajectory, fps=30, realtime=True)
 ```
 
-**Options**:
-- `--method`: Tracking method (`yolo`, `kcf`, `sam2`)
-- `--cls`: YOLO class filter (e.g., `person`)
-- `--ir_backend`: IR backend (`none`, `schroeder`, `pra`)
-- `--depth_backend`: Depth backend (`auto`, `midas`, `none`)
-- `--smooth_alpha`: Temporal smoothing (0.0-1.0, default: 0.2)
+**OSC Addresses:**
+| Address | Value | Description |
+|---------|-------|-------------|
+| `/vid2spatial/azimuth` | -180 to 180 | Degrees |
+| `/vid2spatial/elevation` | -90 to 90 | Degrees |
+| `/vid2spatial/distance` | 0-1 | Normalized (1=near) |
+| `/vid2spatial/velocity` | deg/s | Angular velocity |
+| `/vid2spatial/timecode` | seconds | Sync reference |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 vid2spatial/
-├── README.md                 # This file
-├── requirements.txt          # Dependencies
-├── config.py                 # Configuration
-├── pipeline.py               # Main pipeline
-├── vision.py                 # Vision (depth + tracking)
-├── foa_render.py            # FOA encoding
-├── irgen.py                 # IR generation
-├── utils.py                 # Utilities
+├── vid2spatial_pkg/         # Core Python package
+│   ├── hybrid_tracker.py    # Main tracker (DINO adaptive-K)
+│   ├── trajectory_stabilizer.py  # RTS smoother
+│   ├── foa_render.py        # FOA AmbiX rendering
+│   ├── osc_sender.py        # OSC streaming for DAW
+│   ├── depth_metric.py      # Depth estimation
+│   └── vision.py            # Camera/geometry utilities
 │
-├── evaluation/              # Evaluation code
-│   ├── fairplay_loader.py   # Dataset loader
-│   ├── metrics.py           # Metrics
-│   ├── baseline_systems.py  # Baselines
-│   ├── ablation_study.py    # Ablation study
-│   ├── learned_ir.py        # IR learning
-│   └── improved_ir.py       # GT-matched IR
+├── eval/                    # Evaluation scripts
+│   ├── comprehensive_results/   # Final evaluation data
+│   │   └── FINAL_EVALUATION_REPORT.md
+│   ├── test_adaptive_k_and_rts.py
+│   ├── test_robustness_layer.py
+│   └── test_osc_sender.py
 │
-├── scripts/                 # Scripts
-│   ├── run_demo.py          # Demo
-│   └── train_ir_predictor.py # Train IR
-│
-├── docs/                    # Documentation
-│   ├── ABLATION_STUDY_REPORT.md
-│   ├── FAIR_PLAY_EVALUATION_REPORT.md
-│   └── CRITICAL_ACADEMIC_EVALUATION.md
-│
-├── tests/                   # Tests
-│   ├── test_pipeline.py
-│   └── test_vision.py
-│
-└── results/                 # Outputs (gitignored)
+├── paper/                   # Paper materials
+├── README.md
+└── requirements.txt
 ```
 
 ---
 
-## 🔬 Evaluation
+## Key Components
 
-### Run Evaluation
+### 1. DINO Adaptive-K Re-detection
+- Uses Grounding DINO for text-guided object detection
+- Adaptive keyframe interval based on motion velocity
+- Linear interpolation between keyframes
+
+### 2. Robustness Layer
+- **Confidence gating**: Reject detections with conf < 0.35
+- **Jump rejection**: Reject velocity > 150 px/frame as outliers
+
+### 3. RTS Smoother
+- Rauch-Tung-Striebel two-pass optimal smoothing
+- 93-97% jerk reduction while preserving true motion
+- Recommended for offline/authoring use
+
+### 4. Dual Output
+- **FOA Rendering**: AmbiX 4-channel WAV (W, Y, Z, X)
+- **OSC Streaming**: Real-time parameter output for DAW automation
+
+---
+
+## Evaluation
+
+See [eval/comprehensive_results/FINAL_EVALUATION_REPORT.md](eval/comprehensive_results/FINAL_EVALUATION_REPORT.md) for detailed results.
+
+### Run Tests
 
 ```bash
-# Ablation study (5 configurations)
-python evaluation/ablation_study.py --num_samples 5
+# Test adaptive K and RTS smoother
+python eval/test_adaptive_k_and_rts.py
 
-# Baseline comparison
-python evaluation/baseline_systems.py --num_samples 20
-```
+# Test robustness layer
+python eval/test_robustness_layer.py
 
-### Key Findings (Ablation Study)
-
-| Configuration | Correlation | SI-SDR | Notes |
-|---------------|-------------|--------|-------|
-| **No IR (recommended)** | **0.72** | **+0.7 dB** | ✅ Best |
-| With IR (Schroeder) | 0.37 | -8.6 dB | ❌ Degrades |
-| No depth | 0.38 | -8.1 dB | 4× slower |
-| No smoothing | 0.37 | -8.6 dB | Negligible |
-
-**Critical finding**: IR convolution degrades performance by 50% because FAIR-Play uses dry acoustics (direct=73%, early=7%, late=20%).
-
-See [docs/ABLATION_STUDY_REPORT.md](docs/ABLATION_STUDY_REPORT.md).
-
----
-
-## 🛠️ Advanced Usage
-
-### Custom Configuration
-
-```python
-from config import (
-    PipelineConfig, VisionConfig, DepthConfig,
-    TrackingConfig, RoomConfig, OutputConfig
-)
-
-config = PipelineConfig(
-    video_path="input.mp4",
-    audio_path="input.wav",
-    vision=VisionConfig(
-        depth=DepthConfig(backend='midas'),
-        tracking=TrackingConfig(
-            method='kcf',
-            smooth_alpha=0.2
-        )
-    ),
-    room=RoomConfig(
-        disabled=True  # Disable IR (recommended)
-    ),
-    output=OutputConfig(foa_path="output.foa.wav")
-)
-```
-
-### Train IR Predictor
-
-```bash
-python scripts/train_ir_predictor.py \
-    --dataset results/ir_dataset_50.json \
-    --epochs 100 \
-    --device cuda
+# Test OSC sender
+python eval/test_osc_sender.py
 ```
 
 ---
 
-## 📈 Roadmap
-
-### Completed ✅
-- [x] Real-time geometric pipeline
-- [x] FAIR-Play evaluation (20 samples)
-- [x] Ablation study
-- [x] Learned IR module
-- [x] Baseline comparisons
-
-### In Progress 🔄
-- [ ] Multi-source support (2-3 sources)
-- [ ] Modern tracker (OSTrack)
-- [ ] Metric depth (Depth Anything V2)
-- [ ] 100+ sample evaluation
-
-### Future Work 📝
-- [ ] Neural refiner
-- [ ] Cross-dataset validation
-- [ ] User study
-- [ ] Real-time demo app
-
----
-
-## 📚 Citation
+## Citation
 
 ```bibtex
-@misc{vid2spatial2024,
-  title={Vid2Spatial: Video-to-Spatial Audio with Geometric Encoding},
-  author={Your Name},
-  year={2024},
-  howpublished={\url{https://github.com/YOUR_USERNAME/vid2spatial}}
+@misc{vid2spatial2026,
+  title={Vid2Spatial: Text-Guided Video Tracking for Spatial Audio Authoring},
+  author={Seungheon Doh},
+  year={2026},
+  howpublished={\url{https://github.com/paiiek/vid2spatial}}
 }
 ```
 
 ---
 
-## 🤝 Contributing
+## License
 
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push and open a Pull Request
+MIT License
 
 ---
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE).
-
----
-
-## 🙏 Acknowledgments
-
-- **MiDaS** for depth estimation
-- **FAIR-Play** dataset
-- **OpenCV** for tracking
-
----
-
-**Last Updated**: 2024-11-30
+**Last Updated**: 2026-02-04
