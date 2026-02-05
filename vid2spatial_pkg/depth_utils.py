@@ -18,9 +18,23 @@ from dataclasses import dataclass
 @dataclass
 class DepthConfig:
     """Configuration for depth processing."""
-    # Blending parameters
+    # Blending strategy: "metric_default" (conservative) or "proxy_blend" (aggressive)
+    # metric_default: Use metric depth, only blend proxy when stable AND fast motion
+    # proxy_blend: Original confidence-based blending
+    blend_strategy: str = "metric_default"
+
+    # Blending parameters (for proxy_blend strategy)
     use_bbox_proxy: bool = True
     proxy_blend_by_confidence: bool = True  # blend based on tracking confidence
+    use_proxy_variance_gating: bool = True  # gate proxy by its stability
+
+    # Proxy variance gating parameters
+    proxy_var_window: int = 5  # Window size for variance computation
+    proxy_var_threshold: float = 0.1  # Variance threshold for stability
+    proxy_diff_threshold: float = 0.3  # Max metric-proxy diff (meters) for stability
+
+    # Fast motion threshold for metric_default strategy
+    fast_motion_threshold: float = 0.1  # bbox area change rate threshold
 
     # Adaptive stride parameters
     use_adaptive_stride: bool = True
@@ -34,8 +48,7 @@ class DepthConfig:
     bbox_change_low: float = 0.05
     bbox_change_high: float = 0.2
 
-    # Output options
-    output_d_rel: bool = True  # Output relative distance (0-1)
+    # Output options (d_rel always computed from metric depth)
     d_rel_min: float = 0.5  # Min distance for d_rel normalization
     d_rel_max: float = 10.0  # Max distance for d_rel normalization
 
@@ -70,24 +83,91 @@ def compute_bbox_scale_proxy(
     return proxy_depths.tolist()
 
 
+def compute_proxy_stability(
+    proxy_depths: List[float],
+    metric_depths: List[float],
+    window: int = 5,
+    var_threshold: float = 0.1,
+    diff_threshold: float = 1.0,
+) -> List[float]:
+    """
+    Compute proxy stability score based on:
+    1. Local variance (proxy 자체 안정성)
+    2. Metric-proxy difference (proxy 신뢰성)
+
+    High variance OR large diff -> low stability -> use metric depth
+    Low variance AND small diff -> high stability -> can use proxy
+
+    Args:
+        proxy_depths: Proxy depth values
+        metric_depths: Metric depth values for comparison
+        window: Window size for variance computation
+        var_threshold: Variance threshold (higher = more tolerant)
+        diff_threshold: Max acceptable metric-proxy difference in meters
+
+    Returns:
+        Stability scores (0-1) per frame
+    """
+    n = len(proxy_depths)
+    if n == 0:
+        return []
+
+    proxy_arr = np.array(proxy_depths)
+    metric_arr = np.array(metric_depths) if metric_depths else np.ones(n)
+    stability = []
+
+    for i in range(n):
+        # Get window around current frame
+        start = max(0, i - window // 2)
+        end = min(n, i + window // 2 + 1)
+        window_vals = proxy_arr[start:end]
+
+        if len(window_vals) < 2:
+            stability.append(1.0)  # Not enough data, assume stable
+            continue
+
+        # 1. Local variance stability
+        local_var = np.var(window_vals)
+        var_stab = float(np.exp(-local_var / var_threshold))
+
+        # 2. Metric-proxy difference stability
+        # Large difference means bbox-scale calibration is off
+        diff = abs(proxy_arr[i] - metric_arr[i])
+        diff_stab = float(np.exp(-diff / diff_threshold))
+
+        # Combined: both must be stable (product is stricter)
+        stab = var_stab * diff_stab
+        stability.append(stab)
+
+    return stability
+
+
 def blend_depth_with_proxy(
     metric_depths: List[float],
     proxy_depths: List[float],
     confidences: List[float],
+    proxy_stability: Optional[List[float]] = None,
     min_confidence: float = 0.3,
     max_confidence: float = 0.8,
 ) -> List[float]:
     """
-    Blend metric depth with bbox-scale proxy based on confidence.
+    Blend metric depth with bbox-scale proxy based on confidence AND proxy stability.
 
-    Low confidence -> more proxy weight (bbox is still reliable)
-    High confidence -> more metric weight (depth estimation reliable)
+    Blending logic:
+    - confidence: detection reliability (객체 찾기 신뢰도)
+    - proxy_stability: bbox depth reliability (깊이 추정 신뢰도)
+
+    Final alpha = confidence_alpha * stability
+    - Low confidence + stable proxy -> use proxy
+    - Low confidence + unstable proxy -> use metric (safer)
+    - High confidence -> use metric
 
     Args:
         metric_depths: Metric depth values from Depth Anything V2
         proxy_depths: Proxy depth from bbox scale
         confidences: Tracking confidence per frame
-        min_confidence: Below this, use 100% proxy
+        proxy_stability: Stability scores for proxy (0-1), None = assume stable
+        min_confidence: Below this, consider using proxy
         max_confidence: Above this, use 100% metric
 
     Returns:
@@ -98,15 +178,22 @@ def blend_depth_with_proxy(
 
     for i in range(n):
         conf = confidences[i] if i < len(confidences) else 0.5
+        stab = proxy_stability[i] if proxy_stability and i < len(proxy_stability) else 1.0
 
-        # Compute alpha (metric weight) based on confidence
+        # Compute base alpha (metric weight) based on confidence
         if conf <= min_confidence:
-            alpha = 0.0  # 100% proxy
+            base_alpha = 0.0  # Would use 100% proxy
         elif conf >= max_confidence:
-            alpha = 1.0  # 100% metric
+            base_alpha = 1.0  # 100% metric
         else:
             # Linear interpolation
-            alpha = (conf - min_confidence) / (max_confidence - min_confidence)
+            base_alpha = (conf - min_confidence) / (max_confidence - min_confidence)
+
+        # Apply proxy stability gating:
+        # If proxy is unstable (stab low), increase alpha toward metric
+        # alpha = base_alpha + (1 - base_alpha) * (1 - stab)
+        # Simplified: alpha = 1 - (1 - base_alpha) * stab
+        alpha = 1.0 - (1.0 - base_alpha) * stab
 
         metric = metric_depths[i] if i < len(metric_depths) else 2.0
         proxy = proxy_depths[i] if i < len(proxy_depths) else 2.0
@@ -204,9 +291,10 @@ def process_trajectory_depth(
     Post-process trajectory with enhanced depth handling.
 
     Adds:
-    - depth_blended: Blended metric+proxy depth
-    - d_rel: Relative distance (0-1)
+    - depth_blended: Blended metric+proxy depth (with variance gating)
+    - d_rel: Relative distance (0-1) from METRIC depth (always computed)
     - depth_proxy: Pure bbox-scale proxy (for debugging)
+    - proxy_stability: Stability score of proxy (for debugging)
 
     Args:
         frames: Trajectory frames with dist_m, confidence, bbox info
@@ -236,27 +324,63 @@ def process_trajectory_depth(
     initial_depth = metric_depths[0] if metric_depths[0] > 0 else 2.0
     proxy_depths = compute_bbox_scale_proxy(bbox_areas, initial_depth)
 
-    # 2. Blend depths based on confidence
-    if config.use_bbox_proxy and config.proxy_blend_by_confidence:
-        blended_depths = blend_depth_with_proxy(
-            metric_depths, proxy_depths, confidences
-        )
-    else:
-        blended_depths = metric_depths
+    # 2. Compute proxy stability (variance + metric-proxy diff gating)
+    proxy_stability = compute_proxy_stability(
+        proxy_depths,
+        metric_depths,
+        window=config.proxy_var_window,
+        var_threshold=config.proxy_var_threshold,
+        diff_threshold=config.proxy_diff_threshold,
+    )
 
-    # 3. Compute d_rel
-    if config.output_d_rel:
-        d_rel_values = compute_d_rel(blended_depths, config.d_rel_min, config.d_rel_max)
+    # 3. Compute bbox motion rate (for fast motion detection)
+    areas = np.array(bbox_areas)
+    if len(areas) > 1:
+        area_changes = np.abs(np.diff(areas) / (areas[:-1] + 1e-8))
+        # Pad to match length
+        motion_rate = np.concatenate([[0], area_changes])
     else:
-        d_rel_values = [0.5] * len(frames)
+        motion_rate = np.zeros(len(frames))
 
-    # 4. Enhance frames
+    # 4. Blend depths based on strategy
+    if config.blend_strategy == "metric_default":
+        # Conservative: Use metric depth by default
+        # Only blend proxy when: (1) proxy is stable AND (2) fast motion detected
+        blended_depths = []
+        for i in range(len(metric_depths)):
+            is_fast = motion_rate[i] > config.fast_motion_threshold
+            is_stable = proxy_stability[i] > 0.5
+
+            if is_fast and is_stable:
+                # Fast motion + stable proxy: blend with proxy
+                alpha = 0.7  # Still mostly metric
+                blended = alpha * metric_depths[i] + (1 - alpha) * proxy_depths[i]
+            else:
+                # Default: use metric
+                blended = metric_depths[i]
+            blended_depths.append(blended)
+    else:
+        # Original proxy_blend strategy
+        if config.use_bbox_proxy and config.proxy_blend_by_confidence:
+            blended_depths = blend_depth_with_proxy(
+                metric_depths, proxy_depths, confidences, proxy_stability
+            )
+        else:
+            blended_depths = metric_depths
+
+    # 4. Compute d_rel from METRIC depth (always, for consistent OSC output)
+    # This ensures d_rel reflects actual distance, not proxy artifacts
+    d_rel_values = compute_d_rel(metric_depths, config.d_rel_min, config.d_rel_max)
+
+    # 5. Enhance frames
     enhanced_frames = []
     for i, f in enumerate(frames):
         enhanced = f.copy()
         enhanced["depth_proxy"] = proxy_depths[i] if i < len(proxy_depths) else 2.0
         enhanced["depth_blended"] = blended_depths[i] if i < len(blended_depths) else 2.0
         enhanced["d_rel"] = d_rel_values[i] if i < len(d_rel_values) else 0.5
+        if proxy_stability:
+            enhanced["proxy_stability"] = proxy_stability[i] if i < len(proxy_stability) else 1.0
         enhanced_frames.append(enhanced)
 
     return enhanced_frames

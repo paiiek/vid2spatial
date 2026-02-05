@@ -138,15 +138,16 @@ class HybridTrackingResult:
 
                 frames_data = stabilized["frames"]
 
-                # Apply depth enhancement (bbox proxy blending + d_rel)
+                # Apply depth enhancement (bbox proxy blending with variance gating + d_rel)
                 if enhance_depth and len(frames_data) > 0:
                     try:
                         from .depth_utils import process_trajectory_depth, DepthConfig
 
                         config = DepthConfig(
+                            blend_strategy="metric_default",
                             use_bbox_proxy=True,
                             proxy_blend_by_confidence=True,
-                            output_d_rel=True,
+                            use_proxy_variance_gating=True,
                         )
                         frames_data = process_trajectory_depth(frames_data, config)
                     except ImportError:
@@ -220,15 +221,16 @@ class HybridTrackingResult:
                 for t in raw_traj
             ]
 
-        # Apply depth enhancement (bbox proxy blending + d_rel)
+        # Apply depth enhancement (bbox proxy blending with variance gating + d_rel)
         if enhance_depth and len(frames_data) > 0:
             try:
                 from .depth_utils import process_trajectory_depth, DepthConfig
 
                 config = DepthConfig(
+                    blend_strategy="metric_default",
                     use_bbox_proxy=True,
                     proxy_blend_by_confidence=True,
-                    output_d_rel=True,
+                    use_proxy_variance_gating=True,
                 )
                 frames_data = process_trajectory_depth(frames_data, config)
             except ImportError:
