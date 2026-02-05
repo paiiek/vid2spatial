@@ -529,8 +529,11 @@ def rts_smooth_trajectory(
     )
     smoothed = smoother.smooth(measurements)
 
-    # Rebuild trajectory
+    # Rebuild trajectory, preserving additional fields
     result = []
+    # Fields that are recomputed (not preserved from original)
+    computed_fields = {'frame', 'az', 'el', 'dist_m', 'x', 'y', 'z'}
+
     for i, t in enumerate(trajectory):
         az, el, dist = smoothed[i]
 
@@ -539,7 +542,7 @@ def rts_smooth_trajectory(
         y = dist * np.sin(el)
         z = dist * np.cos(az) * np.cos(el)
 
-        result.append({
+        smoothed_frame = {
             'frame': t['frame'],
             'az': float(az),
             'el': float(el),
@@ -547,7 +550,14 @@ def rts_smooth_trajectory(
             'x': float(x),
             'y': float(y),
             'z': float(z),
-        })
+        }
+
+        # Preserve additional fields (depth_blended, d_rel, confidence, w, h, etc.)
+        for key, value in t.items():
+            if key not in computed_fields:
+                smoothed_frame[key] = value
+
+        result.append(smoothed_frame)
 
     return result
 

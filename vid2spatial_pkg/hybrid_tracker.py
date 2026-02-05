@@ -93,6 +93,7 @@ class HybridTrackingResult:
         smooth: bool = True,
         smooth_alpha: float = 0.3,
         stabilizer: Optional[str] = None,
+        enhance_depth: bool = True,
     ) -> Dict:
         """
         Get full 3D trajectory in vid2spatial format.
@@ -104,6 +105,7 @@ class HybridTrackingResult:
                         - None: Use EMA smoothing (default, recommended)
                         - "kalman": Kalman filter (for very noisy/fast objects)
                         - "one_euro": One Euro filter (adaptive smoothing)
+            enhance_depth: Apply depth enhancement (bbox proxy blending + d_rel)
         """
         raw_traj = self.get_trajectory()
 
@@ -159,6 +161,10 @@ class HybridTrackingResult:
                     "pos_x": prev["pos_x"] * (1 - smooth_alpha) + t["pos_x"] * smooth_alpha,
                     "pos_y": prev["pos_y"] * (1 - smooth_alpha) + t["pos_y"] * smooth_alpha,
                     "pos_z": prev["pos_z"] * (1 - smooth_alpha) + t["pos_z"] * smooth_alpha,
+                    # Preserve w, h, confidence for depth enhancement
+                    "w": t.get("w", 100),
+                    "h": t.get("h", 100),
+                    "confidence": t.get("confidence", 0.5),
                 }
                 smoothed.append(smoothed_t)
                 prev = smoothed_t
@@ -172,6 +178,9 @@ class HybridTrackingResult:
                     "x": t["pos_x"],
                     "y": t["pos_y"],
                     "z": t["pos_z"],
+                    "w": t.get("w", 100),
+                    "h": t.get("h", 100),
+                    "confidence": t.get("confidence", 0.5),
                 }
                 for t in smoothed
             ]
@@ -185,9 +194,26 @@ class HybridTrackingResult:
                     "x": t["pos_x"],
                     "y": t["pos_y"],
                     "z": t["pos_z"],
+                    "w": t.get("w", 100),
+                    "h": t.get("h", 100),
+                    "confidence": t.get("confidence", 0.5),
                 }
                 for t in raw_traj
             ]
+
+        # Apply depth enhancement (bbox proxy blending + d_rel)
+        if enhance_depth and len(frames_data) > 0:
+            try:
+                from .depth_utils import process_trajectory_depth, DepthConfig
+
+                config = DepthConfig(
+                    use_bbox_proxy=True,
+                    proxy_blend_by_confidence=True,
+                    output_d_rel=True,
+                )
+                frames_data = process_trajectory_depth(frames_data, config)
+            except ImportError:
+                pass  # depth_utils not available, skip enhancement
 
         return {
             "intrinsics": {
@@ -445,15 +471,17 @@ class HybridTracker:
         sample_stride: int = 1,
         start_frame: int = 0,
         end_frame: Optional[int] = None,
-        estimate_depth: bool = True,
         depth_stride: int = 5,  # Estimate depth every N frames for speed
         tracking_method: str = "sam2",  # "sam2", "yolo", "auto", "redetect", or "hybrid"
         redetect_interval: Optional[int] = None,  # Override instance setting
         ema_alpha: float = 0.3,  # EMA smoothing for hybrid mode
         use_kalman: bool = False,  # Use Kalman filter instead of EMA
+        estimate_depth: bool = True,  # Deprecated, kept for backward compatibility
     ) -> HybridTrackingResult:
         """
         Track object in video using hybrid approach with metric depth.
+
+        Depth estimation is always enabled for proper 3D spatial audio rendering.
 
         Args:
             video_path: Path to video
@@ -461,21 +489,25 @@ class HybridTracker:
             sample_stride: Process every Nth frame
             start_frame: Starting frame
             end_frame: Ending frame
-            estimate_depth: Whether to estimate metric depth
             depth_stride: Estimate depth every N frames (for speed)
             tracking_method: Tracking strategy:
                 - "sam2": SAM2 propagation (accurate for slow motion, default)
                 - "yolo": YOLO+ByteTrack (fast, less accurate)
                 - "auto": YOLO with SAM2 fallback
                 - "redetect": K-frame re-detection with interpolation (best for fast motion)
+                - "adaptive_k": Adaptive K-frame with confidence-based re-detection (recommended)
                 - "hybrid": DINO K-frame + SAM2 propagation + EMA/Kalman (experimental)
             redetect_interval: Override instance redetect_interval for this call
             ema_alpha: EMA smoothing factor for hybrid mode (0-1, lower = smoother)
             use_kalman: Use Kalman filter instead of EMA for hybrid mode
+            estimate_depth: Deprecated, depth is always estimated
 
         Returns:
             HybridTrackingResult with 3D trajectory
         """
+        # Depth estimation is always enabled
+        if not estimate_depth:
+            print("[hybrid] Warning: estimate_depth=False is deprecated, depth will be estimated anyway")
         # Use instance setting if not overridden
         redetect_k = redetect_interval if redetect_interval is not None else self.redetect_interval
         cap = cv2.VideoCapture(video_path)
@@ -572,10 +604,12 @@ class HybridTracker:
                 if sam2_frames:
                     frames = sam2_frames
 
-        # Step 4: Estimate metric depth
-        if estimate_depth and self.depth_estimator is not None:
+        # Step 4: Estimate metric depth (always enabled for proper 3D audio)
+        if self.depth_estimator is not None:
             print(f"[hybrid] Estimating metric depth (stride={depth_stride})...")
             frames = self._estimate_depths(video_path, frames, depth_stride)
+        else:
+            print("[hybrid] Warning: depth_estimator not loaded, using default depth=2.0m")
 
         cap.release()
 
