@@ -529,7 +529,10 @@ def rts_smooth_trajectory(
     )
     smoothed = smoother.smooth(measurements)
 
-    # Rebuild trajectory, preserving additional fields
+    # Rebuild trajectory with explicit field naming:
+    # - dist_m_raw: original metric depth (preserved)
+    # - dist_m: smoothed metric depth (for trajectory analysis)
+    # - depth_render: value for FOA rendering (= depth_blended or dist_m_raw)
     result = []
     # Fields that are recomputed (not preserved from original)
     computed_fields = {'frame', 'az', 'el', 'dist_m', 'x', 'y', 'z'}
@@ -537,16 +540,20 @@ def rts_smooth_trajectory(
     for i, t in enumerate(trajectory):
         az, el, dist = smoothed[i]
 
-        # Recompute XYZ
+        # Recompute XYZ from smoothed values
         x = dist * np.sin(az) * np.cos(el)
         y = dist * np.sin(el)
         z = dist * np.cos(az) * np.cos(el)
+
+        # Get raw metric depth (before smoothing)
+        dist_m_raw = t.get('dist_m', dist)
 
         smoothed_frame = {
             'frame': t['frame'],
             'az': float(az),
             'el': float(el),
-            'dist_m': float(dist),
+            'dist_m': float(dist),  # smoothed
+            'dist_m_raw': float(dist_m_raw),  # original metric
             'x': float(x),
             'y': float(y),
             'z': float(z),
@@ -556,6 +563,10 @@ def rts_smooth_trajectory(
         for key, value in t.items():
             if key not in computed_fields:
                 smoothed_frame[key] = value
+
+        # depth_render: the value FOA renderer should use
+        # Priority: depth_blended (if enhanced) > dist_m_raw
+        smoothed_frame['depth_render'] = smoothed_frame.get('depth_blended', dist_m_raw)
 
         result.append(smoothed_frame)
 

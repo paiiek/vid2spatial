@@ -52,23 +52,36 @@ def interpolate_angles(frames: List[Dict], T: int, sr: int) -> Tuple[np.ndarray,
 def interpolate_angles_distance(frames: List[Dict], T: int, sr: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Interpolate (az, el, dist) per sample.
 
-    Uses depth_blended if available (from depth enhancement), otherwise dist_m.
+    Priority for distance:
+    1. depth_render (explicit render value from RTS smoothing)
+    2. depth_blended (from depth enhancement)
+    3. dist_m_raw (raw metric depth)
+    4. dist_m (may be smoothed)
+    5. 1.0 (fallback)
+
     Returns (az_s, el_s, dist_s) arrays of length T.
     """
     az_s, el_s = interpolate_angles(frames, T, sr)
     idx = np.array([f["frame"] for f in frames], dtype=np.float32)
 
-    # Prefer depth_blended (enhanced), fall back to dist_m, then 1.0
-    if any("depth_blended" in f for f in frames):
+    # Determine which depth field to use
+    if any("depth_render" in f for f in frames):
+        # Best: explicit render value
+        dist = np.array([float(f.get("depth_render", f.get("dist_m", 1.0))) for f in frames], dtype=np.float32)
+    elif any("depth_blended" in f for f in frames):
+        # Fallback: depth_blended (enhanced)
         dist = np.array([float(f.get("depth_blended", f.get("dist_m", 1.0))) for f in frames], dtype=np.float32)
-        s = np.linspace(idx[0], idx[-1], T, dtype=np.float32)
-        dist_s = np.interp(s, idx, dist).astype(np.float32)
+    elif any("dist_m_raw" in f for f in frames):
+        # Fallback: raw metric depth
+        dist = np.array([float(f.get("dist_m_raw", 1.0)) for f in frames], dtype=np.float32)
     elif any("dist_m" in f for f in frames):
+        # Fallback: dist_m (may be smoothed)
         dist = np.array([float(f.get("dist_m", 1.0)) for f in frames], dtype=np.float32)
-        s = np.linspace(idx[0], idx[-1], T, dtype=np.float32)
-        dist_s = np.interp(s, idx, dist).astype(np.float32)
     else:
-        dist_s = np.ones((T,), np.float32)
+        dist = np.ones((len(frames),), np.float32)
+
+    s = np.linspace(idx[0], idx[-1], T, dtype=np.float32)
+    dist_s = np.interp(s, idx, dist).astype(np.float32)
     return az_s, el_s, dist_s
 
 
