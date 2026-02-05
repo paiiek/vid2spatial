@@ -50,12 +50,20 @@ def interpolate_angles(frames: List[Dict], T: int, sr: int) -> Tuple[np.ndarray,
 
 
 def interpolate_angles_distance(frames: List[Dict], T: int, sr: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Interpolate (az, el, dist_m) per sample. If dist_m missing, uses 1.0.
+    """Interpolate (az, el, dist) per sample.
+
+    Uses depth_blended if available (from depth enhancement), otherwise dist_m.
     Returns (az_s, el_s, dist_s) arrays of length T.
     """
     az_s, el_s = interpolate_angles(frames, T, sr)
     idx = np.array([f["frame"] for f in frames], dtype=np.float32)
-    if any("dist_m" in f for f in frames):
+
+    # Prefer depth_blended (enhanced), fall back to dist_m, then 1.0
+    if any("depth_blended" in f for f in frames):
+        dist = np.array([float(f.get("depth_blended", f.get("dist_m", 1.0))) for f in frames], dtype=np.float32)
+        s = np.linspace(idx[0], idx[-1], T, dtype=np.float32)
+        dist_s = np.interp(s, idx, dist).astype(np.float32)
+    elif any("dist_m" in f for f in frames):
         dist = np.array([float(f.get("dist_m", 1.0)) for f in frames], dtype=np.float32)
         s = np.linspace(idx[0], idx[-1], T, dtype=np.float32)
         dist_s = np.interp(s, idx, dist).astype(np.float32)

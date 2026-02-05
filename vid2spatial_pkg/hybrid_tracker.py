@@ -114,7 +114,7 @@ class HybridTrackingResult:
             try:
                 from .trajectory_stabilizer import stabilize_trajectory_3d
 
-                # Convert to frames format
+                # Convert to frames format (include w, h, confidence for depth enhancement)
                 frames_for_stabilizer = [
                     {
                         "frame": t["frame"],
@@ -124,6 +124,9 @@ class HybridTrackingResult:
                         "x": t["pos_x"],
                         "y": t["pos_y"],
                         "z": t["pos_z"],
+                        "w": t.get("w", 100),
+                        "h": t.get("h", 100),
+                        "confidence": t.get("confidence", 0.5),
                     }
                     for t in raw_traj
                 ]
@@ -133,13 +136,29 @@ class HybridTrackingResult:
                     method=stabilizer,
                 )
 
+                frames_data = stabilized["frames"]
+
+                # Apply depth enhancement (bbox proxy blending + d_rel)
+                if enhance_depth and len(frames_data) > 0:
+                    try:
+                        from .depth_utils import process_trajectory_depth, DepthConfig
+
+                        config = DepthConfig(
+                            use_bbox_proxy=True,
+                            proxy_blend_by_confidence=True,
+                            output_d_rel=True,
+                        )
+                        frames_data = process_trajectory_depth(frames_data, config)
+                    except ImportError:
+                        pass
+
                 return {
                     "intrinsics": {
                         "width": self.video_width,
                         "height": self.video_height,
                         "fov_deg": self.fov_deg,
                     },
-                    "frames": stabilized["frames"],
+                    "frames": frames_data,
                     "stabilizer": stabilizer,
                 }
             except ImportError:
