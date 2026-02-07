@@ -57,20 +57,20 @@ wet = 0.05 + 0.30 * d_rel
 
 | Method | Centroid (Hz) | Stereo Width | Dynamic Range | Reverb Ratio |
 |--------|---------------|--------------|---------------|--------------|
-| mono_no_cues | 7930 | 0.000 | 5.1 dB | 0.060 |
-| mono_gain_only | 8104 | 0.000 | 8.4 dB | 0.335 |
-| mono_gain_lpf | 4216 | 0.000 | 8.2 dB | 0.337 |
-| mono_full | 3992 | 0.000 | 8.7 dB | 0.312 |
-| stereo_pan_only | 7933 | 0.461 | 7.5 dB | 0.336 |
-| stereo_pan_full | 3845 | 0.463 | 7.9 dB | 0.315 |
-| foa_to_stereo | 3669 | 0.258 | 8.6 dB | 0.345 |
+| mono_no_cues | 7938 | 0.000 | 5.0 dB | 0.060 |
+| mono_gain_only | 8112 | 0.000 | 8.4 dB | 0.334 |
+| mono_gain_lpf | 4218 | 0.000 | 8.2 dB | 0.336 |
+| mono_full | 3993 | 0.000 | 8.7 dB | 0.310 |
+| stereo_pan_only | 7945 | 0.461 | 7.6 dB | 0.335 |
+| stereo_pan_full | 3848 | 0.463 | 7.9 dB | 0.313 |
+| foa_to_stereo | 3672 | 0.258 | 8.6 dB | 0.343 |
 
 ### FOA Output (4-channel AmbiX)
 
 | Metric | Value | Interpretation |
 |--------|-------|----------------|
-| W (omni) energy | 0.1157 | Omnidirectional component |
-| XYZ (directional) energy | 0.2002 | Directional components |
+| W (omni) energy | 0.1160 | Omnidirectional component |
+| XYZ (directional) energy | 0.2009 | Directional components |
 | Directivity ratio | 1.731 | XYZ/W (higher = more directional) |
 
 **Note**: FOA stereo_width is N/A because 4-channel AmbiX cannot be compared

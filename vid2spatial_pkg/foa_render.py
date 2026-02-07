@@ -598,14 +598,13 @@ def render_stereo_pan_baseline(
         gain = np.clip(gain, 0.2, 1.0)
         audio = audio * gain
 
-    # Simple sine-law panning
-    # pan: -1 = full left, +1 = full right
-    # az: 0 = front, +pi/2 = left, -pi/2 = right
+    # Constant-power panning
+    # Convention: az > 0 = LEFT, az < 0 = RIGHT (matches FOA/HRTF convention)
+    # pan: -1 = full left, +1 = full right  (DAW convention)
+    # So pan = -sin(az) to map +az(left) → negative pan → more L gain
     az = az_series[:T].astype(np.float32)
-    pan = np.sin(az)  # -1 to +1
+    pan = -np.sin(az)  # negate: +az(left) → -pan → L louder
 
-    # Constant power panning (more natural than linear)
-    # L = cos((pan + 1) * pi/4), R = sin((pan + 1) * pi/4)
     pan_angle = (pan + 1) * (np.pi / 4)  # 0 to pi/2
     L_gain = np.cos(pan_angle)
     R_gain = np.sin(pan_angle)
@@ -670,9 +669,9 @@ def render_stereo_pan_reverb_baseline(
             gain = np.clip(gain, 0.2, 1.0)
             audio = audio * gain
 
-    # Apply panning
+    # Apply panning (same convention fix as render_stereo_pan_baseline)
     az = az_series[:T].astype(np.float32)
-    pan = np.sin(az)
+    pan = -np.sin(az)  # negate: +az(left) → L louder
     pan_angle = (pan + 1) * (np.pi / 4)
     L_gain = np.cos(pan_angle)
     R_gain = np.sin(pan_angle)

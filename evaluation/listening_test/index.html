@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vid2Spatial Perceptual Evaluation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+  .container { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  h1 { font-size: 1.8em; margin-bottom: 16px; color: #e94560; }
+  h2 { color: #e94560; font-size: 1.3em; margin-bottom: 12px; }
+
+  .info-box { background: #16213e; border-radius: 8px; padding: 16px 20px; margin: 16px 0; border-left: 4px solid #e94560; line-height: 1.7; }
+  .info-box li { margin: 6px 0; }
+
+  input[type="text"] { background: #16213e; border: 1px solid #444; color: #eee; padding: 10px 16px; border-radius: 6px; font-size: 1em; width: 280px; }
+
+  .btn { display: inline-block; padding: 12px 28px; border-radius: 8px; border: none; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: #e94560; color: #fff; }
+  .btn-primary:hover { background: #c73e54; transform: translateY(-1px); }
+  .btn-secondary { background: #16213e; color: #e94560; border: 2px solid #e94560; }
+  .btn-secondary:hover { background: #e94560; color: #fff; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Progress */
+  .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+  .progress-text { color: #888; font-size: 0.9em; }
+  .progress-bar { width: 100%; height: 4px; background: #333; border-radius: 2px; margin-bottom: 16px; }
+  .progress-fill { height: 100%; background: #e94560; border-radius: 2px; transition: width 0.3s; }
+
+  /* Clip info */
+  .clip-info { background: #16213e; border-radius: 8px; padding: 14px 18px; margin-bottom: 14px; }
+  .clip-name { font-weight: 600; font-size: 1.1em; color: #e94560; }
+  .clip-motion { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75em; margin-left: 10px; background: #2a1a3e; color: #c084fc; }
+
+  /* Video */
+  .video-box { text-align: center; margin: 12px 0; }
+  .video-box video { width: 100%; max-width: 640px; border-radius: 8px; background: #000; }
+
+  /* Version toggle */
+  .version-toggle { display: flex; justify-content: center; gap: 16px; margin: 16px 0; }
+  .ver-btn { padding: 10px 28px; border-radius: 24px; border: 2px solid #444; background: #16213e; color: #ccc; cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.2s; }
+  .ver-btn.active { border-color: #e94560; color: #e94560; background: #2a1a2e; }
+  .ver-btn:hover { border-color: #e94560; }
+  .mono-btn { padding: 8px 16px; border-radius: 16px; border: 1px solid #555; background: #111; color: #888; cursor: pointer; font-size: 0.8em; transition: all 0.2s; }
+  .mono-btn.active { border-color: #888; color: #ccc; }
+
+  /* Play button */
+  .play-row { text-align: center; margin: 10px 0; }
+
+  /* Rating grid: 4 questions × 7-point scale */
+  .rating-grid { margin: 20px 0; }
+  .question-block { background: #16213e; border-radius: 8px; padding: 14px 18px; margin: 10px 0; }
+  .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .q-title { font-weight: 600; font-size: 1em; color: #e94560; }
+  .q-instruction { color: #aaa; font-size: 0.85em; margin-bottom: 10px; }
+  .scale-row { display: flex; justify-content: center; gap: 8px; margin: 8px 0; }
+  .scale-btn { width: 46px; height: 46px; border-radius: 50%; border: 2px solid #444; background: #1a1a2e; color: #ccc; font-size: 1.2em; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+  .scale-btn:hover { border-color: #e94560; color: #e94560; }
+  .scale-btn.selected { background: #e94560; color: #fff; border-color: #e94560; }
+  .anchor-row { display: flex; justify-content: space-between; max-width: 370px; margin: 0 auto; font-size: 0.72em; color: #666; }
+
+  /* Nav */
+  .nav-row { display: flex; justify-content: space-between; margin-top: 20px; }
+
+  /* Results */
+  .thank-you { font-size: 1.3em; color: #4ade80; margin: 16px 0; }
+  .result-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.9em; }
+  .result-table th, .result-table td { padding: 6px 10px; border: 1px solid #333; text-align: center; }
+  .result-table th { background: #16213e; color: #e94560; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ==================== Welcome ==================== -->
+<div id="welcome" class="page active">
+  <h1>Vid2Spatial Perceptual Evaluation</h1>
+  <p style="color:#ccc; margin-bottom:12px;">Thank you for participating in this spatial audio quality evaluation.</p>
+
+  <div class="info-box">
+    <strong>Requirements:</strong>
+    <ul>
+      <li><strong>Headphones required</strong> (over-ear recommended)</li>
+      <li>Quiet listening environment</li>
+      <li>Chrome or Firefox browser</li>
+      <li>Estimated time: <strong>10–15 minutes</strong></li>
+    </ul>
+  </div>
+
+  <div class="info-box">
+    <strong>Task overview:</strong>
+    <p style="margin-top:6px;">For each video clip, you will compare <strong>two versions</strong> of spatial audio (randomly labeled "Version 1" and "Version 2"). Rate each version on <strong>4 dimensions</strong> using a 1–7 scale. A mono reference is available for comparison.</p>
+    <ol style="margin-top:8px;">
+      <li><strong>Alignment</strong> — Does the sound follow the visual object?</li>
+      <li><strong>Smoothness</strong> — Is the spatial movement smooth and stable?</li>
+      <li><strong>Depth</strong> — Are near/far distance changes convincing?</li>
+      <li><strong>Overall usefulness</strong> — How useful for immersive content?</li>
+    </ol>
+  </div>
+
+  <p style="margin-top:20px;">
+    <label for="pid">Participant ID:</label><br>
+    <input type="text" id="pid" placeholder="e.g., P01" style="margin-top:8px;">
+  </p>
+  <p style="margin-top:20px;">
+    <button class="btn btn-primary" onclick="startTest()">Start Evaluation</button>
+  </p>
+</div>
+
+<!-- ==================== Test Page ==================== -->
+<div id="test-page" class="page">
+  <div class="header-bar">
+    <h2 id="clip-header"></h2>
+    <span class="progress-text" id="prog-text"></span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+
+  <div class="clip-info">
+    <span class="clip-name" id="clip-name"></span>
+    <span class="clip-motion" id="clip-motion"></span>
+  </div>
+
+  <!-- Video -->
+  <div class="video-box">
+    <video id="vid" muted playsinline></video>
+  </div>
+
+  <!-- Version toggle: Version 1, Version 2, (Mono ref) -->
+  <div class="version-toggle">
+    <button class="ver-btn active" id="ver-btn-0" onclick="switchVersion(0)">Version 1</button>
+    <button class="ver-btn" id="ver-btn-1" onclick="switchVersion(1)">Version 2</button>
+    <button class="mono-btn" id="mono-btn" onclick="switchVersion(2)">Mono (reference)</button>
+  </div>
+
+  <div class="play-row">
+    <button class="btn btn-secondary" onclick="playSync()">&#9654; Play</button>
+    <button class="btn btn-secondary" onclick="stopSync()" style="margin-left:8px;">&#9724; Stop</button>
+  </div>
+
+  <!-- Rating for current version -->
+  <div id="rating-area">
+    <div style="text-align:center; margin:12px 0; font-weight:600; color:#e94560;" id="rating-version-label">Rating: Version 1</div>
+    <div class="rating-grid" id="rating-grid"></div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn btn-secondary" id="prev-btn" onclick="prevClip()">Previous</button>
+    <button class="btn btn-primary" id="next-btn" onclick="nextClip()">Next Clip</button>
+  </div>
+</div>
+
+<!-- ==================== Results ==================== -->
+<div id="results" class="page">
+  <h2>Evaluation Complete</h2>
+  <p class="thank-you">Thank you for your participation!</p>
+  <p>Your responses have been saved to the server.</p>
+  <div id="results-summary"></div>
+  <p style="margin-top:20px;">
+    <button class="btn btn-primary" onclick="downloadResults()">Download Results (JSON)</button>
+  </p>
+</div>
+
+</div>
+
+<script>
+// ==================== State ====================
+let CFG = null;
+let PID = '';
+let clipOrder = [];      // shuffled scene indices
+let currentClipIdx = 0;
+let condOrder = {};       // per-clip: [condId0, condId1] (randomized blind order)
+let activeVersion = 0;    // 0 or 1 (blind), 2 = mono
+let ratings = {};         // {clipId: {condId: {qId: score}}}
+
+const vid = document.getElementById('vid');
+let audioCtx = null;
+let audioBuffers = {};   // {url: AudioBuffer}
+let currentSource = null;
+let audioStartOffset = 0;
+
+// ==================== Load config ====================
+async function loadConfig() {
+  const r = await fetch('stimuli/config.json');
+  CFG = await r.json();
+}
+loadConfig();
+
+// ==================== Audio loading via Web Audio API ====================
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+async function loadAudioBuffer(url) {
+  if (audioBuffers[url]) return audioBuffers[url];
+  const ctx = getAudioCtx();
+  const resp = await fetch(url);
+  const arrayBuf = await resp.arrayBuffer();
+  const buf = await ctx.decodeAudioData(arrayBuf);
+  audioBuffers[url] = buf;
+  return buf;
+}
+
+// ==================== Start ====================
+function startTest() {
+  PID = document.getElementById('pid').value.trim();
+  if (!PID) { alert('Please enter a Participant ID'); return; }
+
+  const rng = makeRng(hashStr(PID));
+  clipOrder = shuffle([...Array(CFG.scenes.length).keys()], rng);
+
+  // Per-clip randomized condition order (blind)
+  const conds = CFG.conditions.filter(c => c.id !== 'mono').map(c => c.id);
+  for (const scene of CFG.scenes) {
+    const rngClip = makeRng(hashStr(PID + scene.id));
+    condOrder[scene.id] = shuffle([...conds], rngClip);
+  }
+
+  ratings = {};
+  currentClipIdx = 0;
+
+  document.getElementById('welcome').classList.remove('active');
+  document.getElementById('test-page').classList.add('active');
+  showClip();
+}
+
+// ==================== Show clip ====================
+function showClip() {
+  if (currentClipIdx >= clipOrder.length) { finishTest(); return; }
+
+  const sceneIdx = clipOrder[currentClipIdx];
+  const scene = CFG.scenes[sceneIdx];
+  const order = condOrder[scene.id]; // [condId, condId] blind
+
+  // Header
+  document.getElementById('clip-header').textContent =
+    `Clip ${currentClipIdx + 1} of ${clipOrder.length}`;
+  document.getElementById('prog-text').textContent =
+    `${currentClipIdx + 1} / ${clipOrder.length}`;
+  document.getElementById('prog-fill').style.width =
+    `${((currentClipIdx + 1) / clipOrder.length) * 100}%`;
+
+  // Clip info
+  document.getElementById('clip-name').textContent =
+    scene.id.replace(/_/g, ' ').replace(/^\d+\s*/, '');
+  document.getElementById('clip-motion').textContent = scene.motion;
+
+  // Video
+  vid.src = `stimuli/${scene.id}/overlay.mp4`;
+  vid.load();
+
+  // Preload audio
+  for (const cid of order) {
+    const cond = CFG.conditions.find(c => c.id === cid);
+    loadAudioBuffer(`stimuli/${scene.id}/${cond.file}`);
+  }
+  loadAudioBuffer(`stimuli/${scene.id}/mono.wav`);
+
+  // Init ratings for this clip if needed
+  if (!ratings[scene.id]) {
+    ratings[scene.id] = {};
+    for (const cid of order) {
+      ratings[scene.id][cid] = {};
+    }
+  }
+
+  activeVersion = 0;
+  updateVersionButtons();
+  renderRatingGrid();
+
+  document.getElementById('prev-btn').disabled = (currentClipIdx === 0);
+  document.getElementById('next-btn').textContent =
+    currentClipIdx === clipOrder.length - 1 ? 'Finish' : 'Next Clip';
+}
+
+// ==================== Version switching ====================
+function switchVersion(v) {
+  stopSync();
+  activeVersion = v;
+  updateVersionButtons();
+  renderRatingGrid();
+}
+
+function updateVersionButtons() {
+  document.getElementById('ver-btn-0').classList.toggle('active', activeVersion === 0);
+  document.getElementById('ver-btn-1').classList.toggle('active', activeVersion === 1);
+  document.getElementById('mono-btn').classList.toggle('active', activeVersion === 2);
+
+  const label = document.getElementById('rating-version-label');
+  const ratingArea = document.getElementById('rating-area');
+  if (activeVersion === 2) {
+    label.textContent = 'Mono reference (not rated)';
+    document.getElementById('rating-grid').innerHTML =
+      '<p style="text-align:center;color:#888;padding:16px;">Mono is provided as a reference point only. Switch to Version 1 or 2 to rate.</p>';
+  } else {
+    label.textContent = `Rating: Version ${activeVersion + 1}`;
+  }
+}
+
+// ==================== Audio/Video sync play ====================
+function playSync() {
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+
+  const sceneIdx = clipOrder[currentClipIdx];
+  const scene = CFG.scenes[sceneIdx];
+  const order = condOrder[scene.id];
+
+  let audioUrl;
+  if (activeVersion === 2) {
+    audioUrl = `stimuli/${scene.id}/mono.wav`;
+  } else {
+    const cid = order[activeVersion];
+    const cond = CFG.conditions.find(c => c.id === cid);
+    audioUrl = `stimuli/${scene.id}/${cond.file}`;
+  }
+
+  stopSync();
+
+  loadAudioBuffer(audioUrl).then(buf => {
+    const source = ctx.createBufferSource();
+    source.buffer = buf;
+    source.connect(ctx.destination);
+
+    vid.currentTime = 0;
+    vid.play();
+    source.start(0);
+    currentSource = source;
+
+    source.onended = () => { currentSource = null; };
+  });
+}
+
+function stopSync() {
+  vid.pause();
+  vid.currentTime = 0;
+  if (currentSource) {
+    try { currentSource.stop(); } catch(e) {}
+    currentSource = null;
+  }
+}
+
+// ==================== Rating grid ====================
+function renderRatingGrid() {
+  const grid = document.getElementById('rating-grid');
+  if (activeVersion === 2) return; // mono — no rating
+
+  const sceneIdx = clipOrder[currentClipIdx];
+  const scene = CFG.scenes[sceneIdx];
+  const order = condOrder[scene.id];
+  const condId = order[activeVersion];
+  const saved = ratings[scene.id][condId] || {};
+
+  let html = '';
+  for (const q of CFG.questions) {
+    const selVal = saved[q.id] || 0;
+    html += `<div class="question-block">
+      <div class="q-header">
+        <span class="q-title">${q.text}</span>
+      </div>
+      <div class="q-instruction">${q.instruction}</div>
+      <div class="scale-row">`;
+    for (let v = 1; v <= 7; v++) {
+      html += `<button class="scale-btn ${selVal === v ? 'selected' : ''}"
+                 onclick="rate('${q.id}', ${v})">${v}</button>`;
+    }
+    html += `</div>
+      <div class="anchor-row">
+        <span>${q.anchors['1']}</span>
+        <span>${q.anchors['7']}</span>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function rate(qId, value) {
+  const sceneIdx = clipOrder[currentClipIdx];
+  const scene = CFG.scenes[sceneIdx];
+  const order = condOrder[scene.id];
+  const condId = order[activeVersion];
+
+  if (!ratings[scene.id][condId]) ratings[scene.id][condId] = {};
+  ratings[scene.id][condId][qId] = value;
+
+  renderRatingGrid();
+}
+
+// ==================== Navigation ====================
+function nextClip() {
+  const sceneIdx = clipOrder[currentClipIdx];
+  const scene = CFG.scenes[sceneIdx];
+  const order = condOrder[scene.id];
+  const numQ = CFG.questions.length;
+
+  // Validate: both versions must have all 4 questions rated
+  for (let v = 0; v < order.length; v++) {
+    const cid = order[v];
+    const r = ratings[scene.id][cid] || {};
+    const answered = Object.keys(r).length;
+    if (answered < numQ) {
+      alert(`Please rate all 4 dimensions for Version ${v + 1} before continuing.`);
+      switchVersion(v);
+      return;
+    }
+  }
+
+  stopSync();
+  currentClipIdx++;
+  showClip();
+}
+
+function prevClip() {
+  if (currentClipIdx > 0) {
+    stopSync();
+    currentClipIdx--;
+    showClip();
+  }
+}
+
+// ==================== Finish ====================
+function finishTest() {
+  stopSync();
+  document.getElementById('test-page').classList.remove('active');
+  document.getElementById('results').classList.add('active');
+
+  // Build structured results
+  const trials = [];
+  for (const sceneIdx of clipOrder) {
+    const scene = CFG.scenes[sceneIdx];
+    const order = condOrder[scene.id];
+    for (let v = 0; v < order.length; v++) {
+      const condId = order[v];
+      const r = ratings[scene.id][condId] || {};
+      trials.push({
+        scene: scene.id,
+        motion: scene.motion,
+        condition: condId,
+        blind_label: `Version ${v + 1}`,
+        ratings: r,
+      });
+    }
+  }
+
+  const result = {
+    participant_id: PID,
+    timestamp: new Date().toISOString(),
+    num_clips: clipOrder.length,
+    questions: CFG.questions.map(q => q.id),
+    scale: '1-7 MOS',
+    trials: trials,
+  };
+
+  // Save to server
+  fetch('api/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(result),
+  }).catch(() => {});
+
+  window._results = result;
+  showSummary(result);
+}
+
+function showSummary(result) {
+  const div = document.getElementById('results-summary');
+  const condIds = [...new Set(result.trials.map(t => t.condition))];
+  const qIds = result.questions;
+
+  let html = '<h3 style="margin-top:16px;">Per-dimension Means</h3>';
+  html += '<table class="result-table"><tr><th>Dimension</th>';
+  for (const cid of condIds) {
+    const label = CFG.conditions.find(c => c.id === cid);
+    html += `<th>${label ? label.id : cid}</th>`;
+  }
+  html += '</tr>';
+
+  for (const qId of qIds) {
+    const qDef = CFG.questions.find(q => q.id === qId);
+    html += `<tr><td>${qDef.text}</td>`;
+    for (const cid of condIds) {
+      const vals = result.trials
+        .filter(t => t.condition === cid)
+        .map(t => t.ratings[qId])
+        .filter(v => v != null);
+      const mean = vals.length ? (vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(2) : '—';
+      html += `<td>${mean}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  div.innerHTML = html;
+}
+
+function downloadResults() {
+  const blob = new Blob([JSON.stringify(window._results, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vid2spatial_eval_${PID}_${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ==================== Utilities ====================
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
+function makeRng(seed) {
+  let a = seed;
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle(arr, rng) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+</script>
+
+</body>
+</html>
