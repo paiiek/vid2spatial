@@ -565,8 +565,9 @@ def rts_smooth_trajectory(
                 smoothed_frame[key] = value
 
         # depth_render: the value FOA renderer should use
-        # Priority: depth_blended (if enhanced) > dist_m_raw
-        smoothed_frame['depth_render'] = smoothed_frame.get('depth_blended', dist_m_raw)
+        # Use RTS-smoothed dist_m to avoid piecewise-linear artifacts
+        # from depth_stride interpolation (depth_blended is unsmoothed)
+        smoothed_frame['depth_render'] = float(dist)
 
         result.append(smoothed_frame)
 

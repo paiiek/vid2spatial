@@ -1,0 +1,1258 @@
+{
+  "date": "2026-02-06",
+  "total_videos": 20,
+  "results": [
+    {
+      "video_id": "01_guitar_acoustic",
+      "prompt": "acoustic guitar",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/01_guitar_acoustic.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/01_guitar_acoustic/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 14.21,
+          "frames_tracked": 250,
+          "fps": 25.0,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 250,
+          "stats": {
+            "az_range": [
+              0.13,
+              0.19
+            ],
+            "el_range": [
+              -0.0,
+              -0.0
+            ],
+            "dist_range": [
+              0.85,
+              0.99
+            ],
+            "d_rel_range": [
+              0.036,
+              0.052
+            ],
+            "mean_confidence": 0.857
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 90.6,
+          "raw_jerk": 4.4e-05,
+          "smooth_jerk": 4e-06
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.47,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/01_guitar_acoustic/01_guitar_acoustic_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.16,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/01_guitar_acoustic/01_guitar_acoustic_binaural.wav"
+        }
+      },
+      "total_time_sec": 14.87
+    },
+    {
+      "video_id": "02_piano_playing",
+      "prompt": "piano",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/02_piano_playing.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/02_piano_playing/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 9.76,
+          "frames_tracked": 240,
+          "fps": 24.0,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 240,
+          "stats": {
+            "az_range": [
+              -0.0,
+              -0.0
+            ],
+            "el_range": [
+              -0.0,
+              -0.0
+            ],
+            "dist_range": [
+              0.39,
+              1.0
+            ],
+            "d_rel_range": [
+              0.0,
+              0.053
+            ],
+            "mean_confidence": 0.46
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.5,
+          "raw_jerk": 4e-06,
+          "smooth_jerk": 0.0
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.42,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/02_piano_playing/02_piano_playing_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/02_piano_playing/02_piano_playing_binaural.wav"
+        }
+      },
+      "total_time_sec": 10.23
+    },
+    {
+      "video_id": "03_drums_playing",
+      "prompt": "drums",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/03_drums_playing.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/03_drums_playing/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 11.85,
+          "frames_tracked": 300,
+          "fps": 29.97002997002997,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.24,
+              0.32
+            ],
+            "el_range": [
+              -0.21,
+              0.29
+            ],
+            "dist_range": [
+              0.3,
+              2.15
+            ],
+            "d_rel_range": [
+              0.0,
+              0.174
+            ],
+            "mean_confidence": 0.386
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 89.4,
+          "raw_jerk": 0.00149,
+          "smooth_jerk": 0.000159
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/03_drums_playing/03_drums_playing_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/03_drums_playing/03_drums_playing_binaural.wav"
+        }
+      },
+      "total_time_sec": 12.34
+    },
+    {
+      "video_id": "04_violin_playing",
+      "prompt": "violin",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/04_violin_playing.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/04_violin_playing/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 11.11,
+          "frames_tracked": 300,
+          "fps": 29.97002997002997,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.03,
+              0.03
+            ],
+            "el_range": [
+              0.09,
+              0.11
+            ],
+            "dist_range": [
+              1.28,
+              2.09
+            ],
+            "d_rel_range": [
+              0.082,
+              0.168
+            ],
+            "mean_confidence": 0.448
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.4,
+          "raw_jerk": 0.000159,
+          "smooth_jerk": 1.9e-05
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.42,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/04_violin_playing/04_violin_playing_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/04_violin_playing/04_violin_playing_binaural.wav"
+        }
+      },
+      "total_time_sec": 11.59
+    },
+    {
+      "video_id": "05_soccer_kick",
+      "prompt": "soccer ball",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/05_soccer_kick.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/05_soccer_kick/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 14.18,
+          "frames_tracked": 300,
+          "fps": 29.97002997002997,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.32,
+              0.16
+            ],
+            "el_range": [
+              -0.1,
+              0.1
+            ],
+            "dist_range": [
+              0.35,
+              13.75
+            ],
+            "d_rel_range": [
+              0.0,
+              1.0
+            ],
+            "mean_confidence": 0.581
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 95.2,
+          "raw_jerk": 0.002494,
+          "smooth_jerk": 0.00012
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.42,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/05_soccer_kick/05_soccer_kick_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/05_soccer_kick/05_soccer_kick_binaural.wav"
+        }
+      },
+      "total_time_sec": 14.65
+    },
+    {
+      "video_id": "06_basketball_dribble",
+      "prompt": "basketball",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/06_basketball_dribble.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/06_basketball_dribble/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 36.37,
+          "frames_tracked": 300,
+          "fps": 29.97002997002997,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.36,
+              0.2
+            ],
+            "el_range": [
+              -0.14,
+              0.22
+            ],
+            "dist_range": [
+              0.79,
+              4.08
+            ],
+            "d_rel_range": [
+              0.031,
+              0.377
+            ],
+            "mean_confidence": 0.403
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.3,
+          "raw_jerk": 0.001043,
+          "smooth_jerk": 0.000122
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.44,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/06_basketball_dribble/06_basketball_dribble_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/06_basketball_dribble/06_basketball_dribble_binaural.wav"
+        }
+      },
+      "total_time_sec": 36.88
+    },
+    {
+      "video_id": "07_tennis_serve",
+      "prompt": "tennis ball",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/07_tennis_serve.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/07_tennis_serve/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 26.93,
+          "frames_tracked": 300,
+          "fps": 30.0,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.03,
+              0.18
+            ],
+            "el_range": [
+              -0.28,
+              0.18
+            ],
+            "dist_range": [
+              4.14,
+              28.35
+            ],
+            "d_rel_range": [
+              0.384,
+              1.0
+            ],
+            "mean_confidence": 0.348
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 97.1,
+          "raw_jerk": 0.005153,
+          "smooth_jerk": 0.00015
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.42,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/07_tennis_serve/07_tennis_serve_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/07_tennis_serve/07_tennis_serve_binaural.wav"
+        }
+      },
+      "total_time_sec": 27.42
+    },
+    {
+      "video_id": "08_runner_track",
+      "prompt": "runner",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/08_runner_track.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/08_runner_track/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 9.04,
+          "frames_tracked": 250,
+          "fps": 25.0,
+          "video_size": "480x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 250,
+          "stats": {
+            "az_range": [
+              -0.45,
+              0.41
+            ],
+            "el_range": [
+              -0.07,
+              0.37
+            ],
+            "dist_range": [
+              1.03,
+              30.26
+            ],
+            "d_rel_range": [
+              0.056,
+              1.0
+            ],
+            "mean_confidence": 0.533
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.4,
+          "raw_jerk": 0.004181,
+          "smooth_jerk": 0.000483
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/08_runner_track/08_runner_track_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/08_runner_track/08_runner_track_binaural.wav"
+        }
+      },
+      "total_time_sec": 9.52
+    },
+    {
+      "video_id": "09_car_driving",
+      "prompt": "car",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/09_car_driving.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/09_car_driving/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 11.62,
+          "frames_tracked": 300,
+          "fps": 29.97002997002997,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.0,
+              -0.0
+            ],
+            "el_range": [
+              -0.0,
+              -0.0
+            ],
+            "dist_range": [
+              3.03,
+              4.53
+            ],
+            "d_rel_range": [
+              0.266,
+              0.424
+            ],
+            "mean_confidence": 0.477
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 100.0,
+          "raw_jerk": 0.0,
+          "smooth_jerk": 0.0
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/09_car_driving/09_car_driving_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/09_car_driving/09_car_driving_binaural.wav"
+        }
+      },
+      "total_time_sec": 12.1
+    },
+    {
+      "video_id": "10_motorcycle_road",
+      "prompt": "motorcycle",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/10_motorcycle_road.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/10_motorcycle_road/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 10.34,
+          "frames_tracked": 250,
+          "fps": 25.0,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 250,
+          "stats": {
+            "az_range": [
+              -0.37,
+              0.29
+            ],
+            "el_range": [
+              -0.14,
+              0.23
+            ],
+            "dist_range": [
+              0.33,
+              50.0
+            ],
+            "d_rel_range": [
+              0.0,
+              1.0
+            ],
+            "mean_confidence": 0.531
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.7,
+          "raw_jerk": 0.002549,
+          "smooth_jerk": 0.000288
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/10_motorcycle_road/10_motorcycle_road_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/10_motorcycle_road/10_motorcycle_road_binaural.wav"
+        }
+      },
+      "total_time_sec": 10.83
+    },
+    {
+      "video_id": "11_bicycle_park",
+      "prompt": "bicycle",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/11_bicycle_park.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/11_bicycle_park/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 48.78,
+          "frames_tracked": 240,
+          "fps": 23.976023976023978,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 240,
+          "stats": {
+            "az_range": [
+              -0.47,
+              0.5
+            ],
+            "el_range": [
+              -0.01,
+              0.12
+            ],
+            "dist_range": [
+              1.05,
+              26.09
+            ],
+            "d_rel_range": [
+              0.058,
+              1.0
+            ],
+            "mean_confidence": 0.289
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 98.2,
+          "raw_jerk": 0.026132,
+          "smooth_jerk": 0.000467
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.44,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/11_bicycle_park/11_bicycle_park_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/11_bicycle_park/11_bicycle_park_binaural.wav"
+        }
+      },
+      "total_time_sec": 49.28
+    },
+    {
+      "video_id": "12_train_passing",
+      "prompt": "train",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/12_train_passing.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/12_train_passing/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 13.44,
+          "frames_tracked": 300,
+          "fps": 29.97002997002997,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.03,
+              0.18
+            ],
+            "el_range": [
+              -0.07,
+              0.01
+            ],
+            "dist_range": [
+              0.8,
+              18.12
+            ],
+            "d_rel_range": [
+              0.031,
+              1.0
+            ],
+            "mean_confidence": 0.589
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 98.2,
+          "raw_jerk": 0.002886,
+          "smooth_jerk": 5.1e-05
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/12_train_passing/12_train_passing_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/12_train_passing/12_train_passing_binaural.wav"
+        }
+      },
+      "total_time_sec": 13.94
+    },
+    {
+      "video_id": "13_dog_running",
+      "prompt": "dog",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/13_dog_running.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/13_dog_running/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 17.19,
+          "frames_tracked": 300,
+          "fps": 30.0,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.31,
+              0.34
+            ],
+            "el_range": [
+              -0.22,
+              0.02
+            ],
+            "dist_range": [
+              3.58,
+              46.02
+            ],
+            "d_rel_range": [
+              0.324,
+              1.0
+            ],
+            "mean_confidence": 0.516
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 89.7,
+          "raw_jerk": 0.00289,
+          "smooth_jerk": 0.000297
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/13_dog_running/13_dog_running_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/13_dog_running/13_dog_running_binaural.wav"
+        }
+      },
+      "total_time_sec": 17.68
+    },
+    {
+      "video_id": "14_bird_flying",
+      "prompt": "bird",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/14_bird_flying.mp4",
+      "status": "failed_tracking",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/14_bird_flying/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "error",
+          "error": "No object found matching: 'bird'"
+        }
+      }
+    },
+    {
+      "video_id": "15_cat_walking",
+      "prompt": "cat",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/15_cat_walking.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/15_cat_walking/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 13.95,
+          "frames_tracked": 250,
+          "fps": 25.0,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 250,
+          "stats": {
+            "az_range": [
+              0.26,
+              0.26
+            ],
+            "el_range": [
+              -0.04,
+              -0.04
+            ],
+            "dist_range": [
+              2.41,
+              6.98
+            ],
+            "d_rel_range": [
+              0.201,
+              0.683
+            ],
+            "mean_confidence": 0.272
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 92.8,
+          "raw_jerk": 3e-06,
+          "smooth_jerk": 0.0
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.42,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/15_cat_walking/15_cat_walking_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/15_cat_walking/15_cat_walking_binaural.wav"
+        }
+      },
+      "total_time_sec": 14.42
+    },
+    {
+      "video_id": "16_horse_galloping",
+      "prompt": "horse",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/16_horse_galloping.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/16_horse_galloping/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 11.62,
+          "frames_tracked": 300,
+          "fps": 30.0,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.08,
+              0.25
+            ],
+            "el_range": [
+              -0.06,
+              0.15
+            ],
+            "dist_range": [
+              2.83,
+              11.75
+            ],
+            "d_rel_range": [
+              0.245,
+              1.0
+            ],
+            "mean_confidence": 0.808
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 90.8,
+          "raw_jerk": 7.1e-05,
+          "smooth_jerk": 7e-06
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/16_horse_galloping/16_horse_galloping_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/16_horse_galloping/16_horse_galloping_binaural.wav"
+        }
+      },
+      "total_time_sec": 12.1
+    },
+    {
+      "video_id": "17_person_walking",
+      "prompt": "person",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/17_person_walking.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/17_person_walking/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 12.58,
+          "frames_tracked": 300,
+          "fps": 29.97002997002997,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 300,
+          "stats": {
+            "az_range": [
+              -0.44,
+              0.47
+            ],
+            "el_range": [
+              -0.0,
+              0.05
+            ],
+            "dist_range": [
+              4.04,
+              22.88
+            ],
+            "d_rel_range": [
+              0.373,
+              1.0
+            ],
+            "mean_confidence": 0.601
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.5,
+          "raw_jerk": 0.002942,
+          "smooth_jerk": 0.000337
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/17_person_walking/17_person_walking_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/17_person_walking/17_person_walking_binaural.wav"
+        }
+      },
+      "total_time_sec": 13.07
+    },
+    {
+      "video_id": "18_dancer_stage",
+      "prompt": "dancer",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/18_dancer_stage.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/18_dancer_stage/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 9.74,
+          "frames_tracked": 240,
+          "fps": 23.976023976023978,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 240,
+          "stats": {
+            "az_range": [
+              -0.31,
+              0.04
+            ],
+            "el_range": [
+              0.05,
+              0.16
+            ],
+            "dist_range": [
+              0.3,
+              6.82
+            ],
+            "d_rel_range": [
+              0.0,
+              0.665
+            ],
+            "mean_confidence": 0.516
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.3,
+          "raw_jerk": 0.001159,
+          "smooth_jerk": 0.000135
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.42,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/18_dancer_stage/18_dancer_stage_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/18_dancer_stage/18_dancer_stage_binaural.wav"
+        }
+      },
+      "total_time_sec": 10.21
+    },
+    {
+      "video_id": "19_chef_cooking",
+      "prompt": "chef",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/19_chef_cooking.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/19_chef_cooking/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 9.89,
+          "frames_tracked": 240,
+          "fps": 23.976023976023978,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 240,
+          "stats": {
+            "az_range": [
+              -0.2,
+              0.07
+            ],
+            "el_range": [
+              -0.14,
+              0.04
+            ],
+            "dist_range": [
+              0.3,
+              3.04
+            ],
+            "d_rel_range": [
+              0.0,
+              0.268
+            ],
+            "mean_confidence": 0.463
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.0,
+          "raw_jerk": 0.000546,
+          "smooth_jerk": 6.6e-05
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.42,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/19_chef_cooking/19_chef_cooking_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/19_chef_cooking/19_chef_cooking_binaural.wav"
+        }
+      },
+      "total_time_sec": 10.36
+    },
+    {
+      "video_id": "20_skateboarder_park",
+      "prompt": "skateboarder",
+      "video_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/20_skateboarder_park.mp4",
+      "status": "success",
+      "stages": {
+        "audio_extract": {
+          "status": "ok",
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/20_skateboarder_park/audio_mono.wav"
+        },
+        "tracking": {
+          "status": "ok",
+          "time_sec": 22.88,
+          "frames_tracked": 240,
+          "fps": 23.976023976023978,
+          "video_size": "640x360"
+        },
+        "trajectory_3d": {
+          "status": "ok",
+          "time_sec": 0.0,
+          "frames": 240,
+          "stats": {
+            "az_range": [
+              -0.02,
+              0.2
+            ],
+            "el_range": [
+              -0.0,
+              0.15
+            ],
+            "dist_range": [
+              1.14,
+              15.5
+            ],
+            "d_rel_range": [
+              0.068,
+              1.0
+            ],
+            "mean_confidence": 0.293
+          }
+        },
+        "smoothing": {
+          "status": "ok",
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 98.4,
+          "raw_jerk": 0.004241,
+          "smooth_jerk": 6.6e-05
+        },
+        "foa_render": {
+          "status": "ok",
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01,
+          "sample_rate": 48000,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/20_skateboarder_park/20_skateboarder_park_foa.wav"
+        },
+        "binaural": {
+          "status": "ok",
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/outputs/20_skateboarder_park/20_skateboarder_park_binaural.wav"
+        }
+      },
+      "total_time_sec": 23.37
+    }
+  ]
+}

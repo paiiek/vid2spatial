@@ -1,0 +1,122 @@
+[
+  {
+    "id": "01_dog_frisbee",
+    "query": "dog catching frisbee slow motion single dog",
+    "prompt": "dog",
+    "category": "animal",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/01_dog_frisbee.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "02_cat_jumping",
+    "query": "cat jumping single cat close up slow motion",
+    "prompt": "cat",
+    "category": "animal",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/02_cat_jumping.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "03_horse_running",
+    "query": "single horse running field side view tracking shot",
+    "prompt": "horse",
+    "category": "animal",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/03_horse_running.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "04_car_highway",
+    "query": "single car driving highway tracking shot drone",
+    "prompt": "car",
+    "category": "vehicle",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/04_car_highway.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "05_motorbike_road",
+    "query": "single motorcycle riding road tracking follow",
+    "prompt": "motorcycle",
+    "category": "vehicle",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/05_motorbike_road.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "06_boat_water",
+    "query": "single boat moving on water tracking shot",
+    "prompt": "boat",
+    "category": "vehicle",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/06_boat_water.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "07_skier_downhill",
+    "query": "single skier downhill skiing tracking shot",
+    "prompt": "skier",
+    "category": "sports",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/07_skier_downhill.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "08_surfer_wave",
+    "query": "single surfer riding wave tracking shot",
+    "prompt": "surfer",
+    "category": "sports",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/08_surfer_wave.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "09_bmx_rider",
+    "query": "single bmx rider trick close up tracking",
+    "prompt": "person on bicycle",
+    "category": "sports",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/09_bmx_rider.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "10_dancer_solo",
+    "query": "solo dancer performing contemporary dance studio",
+    "prompt": "dancer",
+    "category": "people",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/10_dancer_solo.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "11_gymnast_floor",
+    "query": "single gymnast floor exercise close up",
+    "prompt": "gymnast",
+    "category": "people",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/11_gymnast_floor.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "12_parkour_runner",
+    "query": "single parkour runner freerunning city",
+    "prompt": "person",
+    "category": "people",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/12_parkour_runner.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "13_drone_flying",
+    "query": "single drone flying sky tracking shot close up",
+    "prompt": "drone",
+    "category": "object",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/13_drone_flying.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "14_kite_flying",
+    "query": "single kite flying in sky close up tracking",
+    "prompt": "kite",
+    "category": "object",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/14_kite_flying.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "15_ball_bouncing",
+    "query": "single ball bouncing slow motion close up",
+    "prompt": "ball",
+    "category": "object",
+    "local_path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/videos/15_ball_bouncing.mp4",
+    "downloaded": true
+  }
+]

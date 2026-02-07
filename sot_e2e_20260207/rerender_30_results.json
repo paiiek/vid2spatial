@@ -1,0 +1,187 @@
+{
+  "date": "2026-02-07",
+  "phase_a_instrument": [
+    {
+      "vid_id": "01_dog_frisbee",
+      "instrument": "guitar",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/01_dog_frisbee_guitar_binaural.wav"
+    },
+    {
+      "vid_id": "02_cat_jumping",
+      "instrument": "piano",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/02_cat_jumping_piano_binaural.wav"
+    },
+    {
+      "vid_id": "03_horse_running",
+      "instrument": "cello",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/03_horse_running_cello_binaural.wav"
+    },
+    {
+      "vid_id": "04_car_highway",
+      "instrument": "trumpet",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/04_car_highway_trumpet_binaural.wav"
+    },
+    {
+      "vid_id": "05_motorbike_road",
+      "instrument": "clarinet",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/05_motorbike_road_clarinet_binaural.wav"
+    },
+    {
+      "vid_id": "06_boat_water",
+      "instrument": "violin",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/06_boat_water_violin_binaural.wav"
+    },
+    {
+      "vid_id": "07_skier_downhill",
+      "instrument": "flute",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/07_skier_downhill_flute_binaural.wav"
+    },
+    {
+      "vid_id": "08_surfer_wave",
+      "instrument": "saxophone",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/08_surfer_wave_saxophone_binaural.wav"
+    },
+    {
+      "vid_id": "09_bmx_rider",
+      "instrument": "drums",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/09_bmx_rider_drums_binaural.wav"
+    },
+    {
+      "vid_id": "10_dancer_solo",
+      "instrument": "harp",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/10_dancer_solo_harp_binaural.wav"
+    },
+    {
+      "vid_id": "11_gymnast_floor",
+      "instrument": "bass",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/11_gymnast_floor_bass_binaural.wav"
+    },
+    {
+      "vid_id": "12_parkour_runner",
+      "instrument": "organ",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/12_parkour_runner_organ_binaural.wav"
+    },
+    {
+      "vid_id": "13_drone_flying",
+      "instrument": "accordion",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/13_drone_flying_accordion_binaural.wav"
+    },
+    {
+      "vid_id": "14_kite_flying",
+      "instrument": "banjo",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/14_kite_flying_banjo_binaural.wav"
+    },
+    {
+      "vid_id": "15_ball_bouncing",
+      "instrument": "tuba",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_A_instrument/15_ball_bouncing_tuba_binaural.wav"
+    }
+  ],
+  "phase_b_foley": [
+    {
+      "vid_id": "01_dog_frisbee",
+      "foley": "dog bark",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/01_dog_frisbee_dog_bark_binaural.wav"
+    },
+    {
+      "vid_id": "02_cat_jumping",
+      "foley": "cat meow",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/02_cat_jumping_cat_meow_binaural.wav"
+    },
+    {
+      "vid_id": "03_horse_running",
+      "foley": "horse hooves",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/03_horse_running_horse_hooves_binaural.wav"
+    },
+    {
+      "vid_id": "04_car_highway",
+      "foley": "car engine",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/04_car_highway_car_engine_binaural.wav"
+    },
+    {
+      "vid_id": "05_motorbike_road",
+      "foley": "motorcycle rev",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/05_motorbike_road_motorcycle_rev_binaural.wav"
+    },
+    {
+      "vid_id": "06_boat_water",
+      "foley": "boat motor",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/06_boat_water_boat_motor_binaural.wav"
+    },
+    {
+      "vid_id": "07_skier_downhill",
+      "foley": "skiing swoosh",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/07_skier_downhill_skiing_swoosh_binaural.wav"
+    },
+    {
+      "vid_id": "08_surfer_wave",
+      "foley": "wave splash",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/08_surfer_wave_wave_splash_binaural.wav"
+    },
+    {
+      "vid_id": "09_bmx_rider",
+      "foley": "bicycle chain",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/09_bmx_rider_bicycle_chain_binaural.wav"
+    },
+    {
+      "vid_id": "10_dancer_solo",
+      "foley": "dance steps",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/10_dancer_solo_dance_steps_binaural.wav"
+    },
+    {
+      "vid_id": "11_gymnast_floor",
+      "foley": "gym landing",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/11_gymnast_floor_gym_landing_binaural.wav"
+    },
+    {
+      "vid_id": "12_parkour_runner",
+      "foley": "footsteps",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/12_parkour_runner_footsteps_binaural.wav"
+    },
+    {
+      "vid_id": "13_drone_flying",
+      "foley": "drone buzz",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/13_drone_flying_drone_buzz_binaural.wav"
+    },
+    {
+      "vid_id": "14_kite_flying",
+      "foley": "kite flap",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/14_kite_flying_kite_flap_binaural.wav"
+    },
+    {
+      "vid_id": "15_ball_bouncing",
+      "foley": "ball bounce",
+      "status": "ok",
+      "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/render_B_foley/15_ball_bouncing_ball_bounce_binaural.wav"
+    }
+  ]
+}

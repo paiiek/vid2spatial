@@ -57,3 +57,22 @@ archive/
 
 # WandB
 wandb/
+
+# Large experiment output directories (audio/video binaries)
+render_outputs_*/
+test_render_*/
+
+# YOLO weights
+yolo11n.pt
+
+# Experiment binary outputs (keep scripts and JSON/MD)
+**/videos/
+**/audio_instrument/
+**/audio_foley/
+**/outputs/
+**/render_A_*/
+**/render_B_*/
+**/render_orig_*/
+!**/*.py
+!**/*.json
+!**/*.md

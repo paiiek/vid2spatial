@@ -19,12 +19,28 @@ Usage:
 
 import os
 import sys
+import logging
 import numpy as np
 import cv2
 import torch
 from typing import Optional, Tuple, List, Dict, Any
 from dataclasses import dataclass
 from pathlib import Path
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Import video utilities for robustness
+try:
+    from .video_utils import (
+        SceneCutDetector, SceneCutConfig,
+        ZoomDetector, ZoomConfig,
+        assess_frame_quality,
+    )
+    VIDEO_UTILS_AVAILABLE = True
+except ImportError:
+    VIDEO_UTILS_AVAILABLE = False
+    logger.warning("video_utils not available, scene cut/zoom detection disabled")
 
 
 @dataclass
@@ -303,14 +319,38 @@ class HybridTracker:
         self.yolo_model = None
         self.depth_estimator = None
 
+        # Robustness detectors (scene cut, zoom)
+        self.scene_cut_detector = None
+        self.zoom_detector = None
+        self._init_robustness_detectors()
+
         # Load models
         self._load_grounding_dino()
         self._load_sam2(sam2_model)
         self._load_yolo()
         self._load_depth_estimator()
 
+    def _init_robustness_detectors(self):
+        """Initialize scene cut and zoom detectors for pipeline robustness."""
+        if VIDEO_UTILS_AVAILABLE:
+            self.scene_cut_detector = SceneCutDetector(SceneCutConfig(
+                hist_threshold=0.5,
+                frame_diff_threshold=0.3,
+                use_histogram=True,
+                use_frame_diff=True,
+                require_both=False,  # Either method triggers detection
+            ))
+            self.zoom_detector = ZoomDetector(ZoomConfig(
+                bbox_area_rate_threshold=0.3,
+                window_size=5,
+            ))
+            logger.info("[hybrid] Scene cut and zoom detectors initialized")
+        else:
+            self.scene_cut_detector = None
+            self.zoom_detector = None
+
     def _load_grounding_dino(self):
-        """Load Grounding-DINO."""
+        """Load Grounding-DINO with improved error handling."""
         try:
             from groundingdino.util.inference import load_model, predict, load_image
 
@@ -318,39 +358,83 @@ class HybridTracker:
             config_path = os.path.join(weights_dir, "GroundingDINO_SwinT_OGC.py")
             weights_path = os.path.join(weights_dir, "groundingdino_swint_ogc.pth")
 
-            if os.path.exists(weights_path):
-                self.grounding_dino = load_model(config_path, weights_path, device=self.device)
-                self._gd_predict = predict
-                self._gd_load_image = load_image
-                print("[hybrid] Loaded Grounding-DINO")
-            else:
-                print("[hybrid] Grounding-DINO weights not found")
+            if not os.path.exists(weights_path):
+                logger.error(
+                    f"[hybrid] Grounding-DINO weights not found at {weights_path}\n"
+                    "  Please download from: https://github.com/IDEA-Research/GroundingDINO\n"
+                    "  Or run: python -m groundingdino.util.get_pretrained_weights"
+                )
+                return
 
+            self.grounding_dino = load_model(config_path, weights_path, device=self.device)
+            self._gd_predict = predict
+            self._gd_load_image = load_image
+            print("[hybrid] Loaded Grounding-DINO")
+
+        except torch.cuda.OutOfMemoryError:
+            logger.warning("[hybrid] CUDA OOM loading Grounding-DINO, trying CPU...")
+            self._try_load_grounding_dino_cpu()
+        except ImportError as e:
+            logger.error(f"[hybrid] Grounding-DINO not installed: {e}\n"
+                        "  Install with: pip install groundingdino")
         except Exception as e:
-            print(f"[hybrid] Failed to load Grounding-DINO: {e}")
+            logger.error(f"[hybrid] Failed to load Grounding-DINO: {e}")
+
+    def _try_load_grounding_dino_cpu(self):
+        """Fallback: load Grounding-DINO on CPU."""
+        try:
+            from groundingdino.util.inference import load_model, predict, load_image
+            weights_dir = os.path.expanduser("~/.cache/groundingdino")
+            config_path = os.path.join(weights_dir, "GroundingDINO_SwinT_OGC.py")
+            weights_path = os.path.join(weights_dir, "groundingdino_swint_ogc.pth")
+            self.grounding_dino = load_model(config_path, weights_path, device="cpu")
+            self._gd_predict = predict
+            self._gd_load_image = load_image
+            self.device = "cpu"  # Update device
+            print("[hybrid] Loaded Grounding-DINO on CPU (fallback)")
+        except Exception as e:
+            logger.error(f"[hybrid] CPU fallback also failed: {e}")
 
     def _load_sam2(self, model_name: str):
-        """Load SAM2 Image Predictor."""
+        """Load SAM2 Image Predictor with improved error handling."""
         try:
             from sam2.sam2_image_predictor import SAM2ImagePredictor
-
             self.sam2_image_predictor = SAM2ImagePredictor.from_pretrained(model_name)
             print(f"[hybrid] Loaded SAM2 ({model_name})")
 
+        except torch.cuda.OutOfMemoryError:
+            logger.warning("[hybrid] CUDA OOM loading SAM2, trying smaller model...")
+            self._try_load_sam2_fallback()
+        except ImportError as e:
+            logger.error(f"[hybrid] SAM2 not installed: {e}\n"
+                        "  Install with: pip install sam2")
         except Exception as e:
-            print(f"[hybrid] Failed to load SAM2: {e}")
+            logger.error(f"[hybrid] Failed to load SAM2: {e}")
+
+    def _try_load_sam2_fallback(self):
+        """Fallback: try loading smaller SAM2 model."""
+        try:
+            from sam2.sam2_image_predictor import SAM2ImagePredictor
+            # Try tiny model as fallback
+            self.sam2_image_predictor = SAM2ImagePredictor.from_pretrained("facebook/sam2-hiera-tiny")
+            print("[hybrid] Loaded SAM2 (tiny, fallback)")
+        except Exception as e:
+            logger.error(f"[hybrid] SAM2 fallback also failed: {e}")
 
     def _load_yolo(self):
-        """Load YOLO for tracking."""
+        """Load YOLO for tracking with improved error handling."""
         try:
             from ultralytics import YOLO
             self.yolo_model = YOLO("yolo11n.pt")
             print("[hybrid] Loaded YOLO")
+        except ImportError as e:
+            logger.error(f"[hybrid] Ultralytics not installed: {e}\n"
+                        "  Install with: pip install ultralytics")
         except Exception as e:
-            print(f"[hybrid] Failed to load YOLO: {e}")
+            logger.error(f"[hybrid] Failed to load YOLO: {e}")
 
     def _load_depth_estimator(self):
-        """Load Metric Depth Estimator."""
+        """Load Metric Depth Estimator with improved error handling."""
         try:
             from .depth_metric import MetricDepthEstimator
             self.depth_estimator = MetricDepthEstimator(
@@ -359,8 +443,29 @@ class HybridTracker:
                 device=self.device,
             )
             print(f"[hybrid] Loaded MetricDepthEstimator (scene_type={self.scene_type})")
+
+        except torch.cuda.OutOfMemoryError:
+            logger.warning("[hybrid] CUDA OOM loading depth estimator, trying CPU...")
+            self._try_load_depth_estimator_cpu()
+        except ImportError as e:
+            logger.error(f"[hybrid] Depth Anything V2 not available: {e}")
+            self.depth_estimator = None
         except Exception as e:
-            print(f"[hybrid] Failed to load MetricDepthEstimator: {e}")
+            logger.error(f"[hybrid] Failed to load MetricDepthEstimator: {e}")
+            self.depth_estimator = None
+
+    def _try_load_depth_estimator_cpu(self):
+        """Fallback: load depth estimator on CPU."""
+        try:
+            from .depth_metric import MetricDepthEstimator
+            self.depth_estimator = MetricDepthEstimator(
+                scene_type=self.scene_type,
+                model_size="small",
+                device="cpu",
+            )
+            print("[hybrid] Loaded MetricDepthEstimator on CPU (fallback)")
+        except Exception as e:
+            logger.error(f"[hybrid] Depth estimator CPU fallback failed: {e}")
             self.depth_estimator = None
 
     def estimate_depth(
@@ -453,6 +558,39 @@ class HybridTracker:
 
         return ((x1, y1, x2 - x1, y2 - y1), conf, label)
 
+    def check_scene_cut(self, frame: np.ndarray) -> Tuple[bool, float]:
+        """
+        Check if a scene cut occurred.
+
+        Returns:
+            (is_scene_cut, confidence)
+        """
+        if self.scene_cut_detector is None:
+            return False, 0.0
+        return self.scene_cut_detector.update(frame)
+
+    def check_zoom(self, bbox: Tuple[int, int, int, int]) -> Tuple[bool, float]:
+        """
+        Check if camera zoom is occurring.
+
+        Args:
+            bbox: (x, y, w, h) bounding box
+
+        Returns:
+            (is_zoom, zoom_rate) - positive rate = zoom in, negative = zoom out
+        """
+        if self.zoom_detector is None:
+            return False, 0.0
+        return self.zoom_detector.update(bbox)
+
+    def reset_tracking_state(self):
+        """Reset tracking state after scene cut or re-initialization."""
+        if self.scene_cut_detector:
+            self.scene_cut_detector.reset()
+        if self.zoom_detector:
+            self.zoom_detector.reset()
+        logger.info("[hybrid] Tracking state reset")
+
     def get_sam2_mask(
         self,
         image: np.ndarray,
@@ -498,6 +636,8 @@ class HybridTracker:
         ema_alpha: float = 0.3,  # EMA smoothing for hybrid mode
         use_kalman: bool = False,  # Use Kalman filter instead of EMA
         estimate_depth: bool = True,  # Deprecated, kept for backward compatibility
+        detect_scene_cuts: bool = True,  # Enable scene cut detection
+        detect_zoom: bool = True,  # Enable zoom detection for bbox proxy protection
     ) -> HybridTrackingResult:
         """
         Track object in video using hybrid approach with metric depth.
@@ -522,6 +662,8 @@ class HybridTracker:
             ema_alpha: EMA smoothing factor for hybrid mode (0-1, lower = smoother)
             use_kalman: Use Kalman filter instead of EMA for hybrid mode
             estimate_depth: Deprecated, depth is always estimated
+            detect_scene_cuts: Enable scene cut detection and tracker reset
+            detect_zoom: Enable zoom detection to protect bbox proxy
 
         Returns:
             HybridTrackingResult with 3D trajectory

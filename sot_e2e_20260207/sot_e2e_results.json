@@ -1,0 +1,665 @@
+{
+  "date": "2026-02-07",
+  "results": [
+    {
+      "video_id": "01_dog_frisbee",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 14.69,
+          "frames": 300,
+          "fps": 30.0,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.01,
+          "frames": 300,
+          "az_range": [
+            -0.091,
+            0.204
+          ],
+          "el_range": [
+            -0.028,
+            0.186
+          ],
+          "dist_range": [
+            0.58,
+            3.12
+          ],
+          "mean_conf": 0.733,
+          "az_span_deg": 16.9
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 89.6
+        },
+        "foa_render": {
+          "time_sec": 0.44,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.15,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/01_dog_frisbee/01_dog_frisbee_binaural.wav"
+        }
+      },
+      "total_time_sec": 15.3
+    },
+    {
+      "video_id": "02_cat_jumping",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 10.84,
+          "frames": 250,
+          "fps": 25.0,
+          "size": "640x242"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 250,
+          "az_range": [
+            0.028,
+            0.157
+          ],
+          "el_range": [
+            -0.014,
+            -0.005
+          ],
+          "dist_range": [
+            0.57,
+            3.14
+          ],
+          "mean_conf": 0.764,
+          "az_span_deg": 7.4
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 90.7
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/02_cat_jumping/02_cat_jumping_binaural.wav"
+        }
+      },
+      "total_time_sec": 11.31
+    },
+    {
+      "video_id": "03_horse_running",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 62.81,
+          "frames": 300,
+          "fps": 29.97002997002997,
+          "size": "480x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 300,
+          "az_range": [
+            -0.001,
+            -0.001
+          ],
+          "el_range": [
+            -0.001,
+            -0.001
+          ],
+          "dist_range": [
+            1.1,
+            1.74
+          ],
+          "mean_conf": 0.2,
+          "az_span_deg": 0.0
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 100.0
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/03_horse_running/03_horse_running_binaural.wav"
+        }
+      },
+      "total_time_sec": 63.27
+    },
+    {
+      "video_id": "04_car_highway",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 51.64,
+          "frames": 250,
+          "fps": 25.0,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 250,
+          "az_range": [
+            -0.157,
+            0.089
+          ],
+          "el_range": [
+            -0.199,
+            0.225
+          ],
+          "dist_range": [
+            0.3,
+            2.21
+          ],
+          "mean_conf": 0.224,
+          "az_span_deg": 14.1
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 98.7
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/04_car_highway/04_car_highway_binaural.wav"
+        }
+      },
+      "total_time_sec": 52.1
+    },
+    {
+      "video_id": "05_motorbike_road",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 72.31,
+          "frames": 300,
+          "fps": 29.97002997002997,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 300,
+          "az_range": [
+            -0.001,
+            -0.001
+          ],
+          "el_range": [
+            0.024,
+            0.024
+          ],
+          "dist_range": [
+            0.92,
+            11.46
+          ],
+          "mean_conf": 0.2,
+          "az_span_deg": 0.0
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 100.0
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/05_motorbike_road/05_motorbike_road_binaural.wav"
+        }
+      },
+      "total_time_sec": 72.77
+    },
+    {
+      "video_id": "06_boat_water",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 10.39,
+          "frames": 250,
+          "fps": 25.0,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 250,
+          "az_range": [
+            -0.14,
+            0.14
+          ],
+          "el_range": [
+            0.189,
+            0.214
+          ],
+          "dist_range": [
+            2.23,
+            7.81
+          ],
+          "mean_conf": 0.784,
+          "az_span_deg": 16.0
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 89.5
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/06_boat_water/06_boat_water_binaural.wav"
+        }
+      },
+      "total_time_sec": 10.85
+    },
+    {
+      "video_id": "07_skier_downhill",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 9.92,
+          "frames": 250,
+          "fps": 25.0,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 250,
+          "az_range": [
+            -0.284,
+            0.389
+          ],
+          "el_range": [
+            -0.237,
+            0.013
+          ],
+          "dist_range": [
+            1.15,
+            5.79
+          ],
+          "mean_conf": 0.558,
+          "az_span_deg": 38.6
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.6
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/07_skier_downhill/07_skier_downhill_binaural.wav"
+        }
+      },
+      "total_time_sec": 10.38
+    },
+    {
+      "video_id": "08_surfer_wave",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 14.85,
+          "frames": 300,
+          "fps": 29.97002997002997,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 300,
+          "az_range": [
+            -0.504,
+            0.336
+          ],
+          "el_range": [
+            -0.137,
+            -0.081
+          ],
+          "dist_range": [
+            4.19,
+            12.31
+          ],
+          "mean_conf": 0.402,
+          "az_span_deg": 48.1
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 95.4
+        },
+        "foa_render": {
+          "time_sec": 0.44,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/08_surfer_wave/08_surfer_wave_binaural.wav"
+        }
+      },
+      "total_time_sec": 15.32
+    },
+    {
+      "video_id": "09_bmx_rider",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 12.01,
+          "frames": 300,
+          "fps": 29.97,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 300,
+          "az_range": [
+            -0.455,
+            -0.045
+          ],
+          "el_range": [
+            -0.002,
+            0.134
+          ],
+          "dist_range": [
+            0.57,
+            4.64
+          ],
+          "mean_conf": 0.595,
+          "az_span_deg": 23.5
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 89.5
+        },
+        "foa_render": {
+          "time_sec": 0.44,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.03,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/09_bmx_rider/09_bmx_rider_binaural.wav"
+        }
+      },
+      "total_time_sec": 12.49
+    },
+    {
+      "video_id": "10_dancer_solo",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 13.98,
+          "frames": 300,
+          "fps": 29.97,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 300,
+          "az_range": [
+            -0.405,
+            0.117
+          ],
+          "el_range": [
+            0.042,
+            0.212
+          ],
+          "dist_range": [
+            8.07,
+            17.45
+          ],
+          "mean_conf": 0.682,
+          "az_span_deg": 29.9
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 96.2
+        },
+        "foa_render": {
+          "time_sec": 0.44,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/10_dancer_solo/10_dancer_solo_binaural.wav"
+        }
+      },
+      "total_time_sec": 14.45
+    },
+    {
+      "video_id": "11_gymnast_floor",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 9.77,
+          "frames": 240,
+          "fps": 23.976023976023978,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 240,
+          "az_range": [
+            -0.074,
+            0.258
+          ],
+          "el_range": [
+            -0.001,
+            0.128
+          ],
+          "dist_range": [
+            0.49,
+            4.64
+          ],
+          "mean_conf": 0.7,
+          "az_span_deg": 19.0
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 88.8
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/11_gymnast_floor/11_gymnast_floor_binaural.wav"
+        }
+      },
+      "total_time_sec": 10.23
+    },
+    {
+      "video_id": "12_parkour_runner",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 40.35,
+          "frames": 298,
+          "fps": 30.0,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 298,
+          "az_range": [
+            -0.438,
+            0.427
+          ],
+          "el_range": [
+            0.143,
+            0.306
+          ],
+          "dist_range": [
+            0.44,
+            2.14
+          ],
+          "mean_conf": 0.299,
+          "az_span_deg": 49.5
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 98.0
+        },
+        "foa_render": {
+          "time_sec": 0.44,
+          "channels": 4,
+          "duration_sec": 9.96
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/12_parkour_runner/12_parkour_runner_binaural.wav"
+        }
+      },
+      "total_time_sec": 40.82
+    },
+    {
+      "video_id": "13_drone_flying",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 12.87,
+          "frames": 300,
+          "fps": 29.97002997002997,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 300,
+          "az_range": [
+            -0.217,
+            -0.001
+          ],
+          "el_range": [
+            -0.065,
+            0.154
+          ],
+          "dist_range": [
+            0.3,
+            45.92
+          ],
+          "mean_conf": 0.616,
+          "az_span_deg": 12.4
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 98.0
+        },
+        "foa_render": {
+          "time_sec": 0.44,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/13_drone_flying/13_drone_flying_binaural.wav"
+        }
+      },
+      "total_time_sec": 13.34
+    },
+    {
+      "video_id": "14_kite_flying",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 49.96,
+          "frames": 300,
+          "fps": 29.97002997002997,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 300,
+          "az_range": [
+            0.213,
+            0.386
+          ],
+          "el_range": [
+            0.188,
+            0.249
+          ],
+          "dist_range": [
+            2.55,
+            3.83
+          ],
+          "mean_conf": 0.244,
+          "az_span_deg": 9.9
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 98.5
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/14_kite_flying/14_kite_flying_binaural.wav"
+        }
+      },
+      "total_time_sec": 50.42
+    },
+    {
+      "video_id": "15_ball_bouncing",
+      "status": "success",
+      "stages": {
+        "tracking": {
+          "time_sec": 11.26,
+          "frames": 300,
+          "fps": 30.0,
+          "size": "640x360"
+        },
+        "trajectory": {
+          "time_sec": 0.0,
+          "frames": 300,
+          "az_range": [
+            -0.321,
+            -0.291
+          ],
+          "el_range": [
+            -0.098,
+            -0.086
+          ],
+          "dist_range": [
+            2.52,
+            3.01
+          ],
+          "mean_conf": 0.733,
+          "az_span_deg": 1.7
+        },
+        "smoothing": {
+          "time_sec": 0.01,
+          "jerk_reduction_pct": 87.7
+        },
+        "foa_render": {
+          "time_sec": 0.43,
+          "channels": 4,
+          "duration_sec": 10.01
+        },
+        "binaural": {
+          "time_sec": 0.02,
+          "path": "/home/seung/mmhoa/vid2spatial/sot_e2e_20260207/outputs/15_ball_bouncing/15_ball_bouncing_binaural.wav"
+        }
+      },
+      "total_time_sec": 11.72
+    }
+  ]
+}

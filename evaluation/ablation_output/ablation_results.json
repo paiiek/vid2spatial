@@ -1,0 +1,81 @@
+{
+  "stereo": {
+    "mono_no_cues": {
+      "name": "mono_no_cues",
+      "channels": 2,
+      "spectral_centroid_hz": 7930.164438649525,
+      "stereo_width": 0.0,
+      "dynamic_range_db": 5.05629301071167,
+      "reverb_decay_ratio": 0.059616491198539734,
+      "rms_level": 0.44696688652038574
+    },
+    "mono_gain_only": {
+      "name": "mono_gain_only",
+      "channels": 2,
+      "spectral_centroid_hz": 8104.082848826932,
+      "stereo_width": 0.0,
+      "dynamic_range_db": 8.398628234863281,
+      "reverb_decay_ratio": 0.33526456356048584,
+      "rms_level": 0.1496540755033493
+    },
+    "mono_gain_lpf": {
+      "name": "mono_gain_lpf",
+      "channels": 2,
+      "spectral_centroid_hz": 4215.990270634389,
+      "stereo_width": 0.0,
+      "dynamic_range_db": 8.203889846801758,
+      "reverb_decay_ratio": 0.33729520440101624,
+      "rms_level": 0.14897067844867706
+    },
+    "mono_full": {
+      "name": "mono_full",
+      "channels": 2,
+      "spectral_centroid_hz": 3991.74198093006,
+      "stereo_width": 2.220446049250313e-16,
+      "dynamic_range_db": 8.68833065032959,
+      "reverb_decay_ratio": 0.31200262904167175,
+      "rms_level": 0.16355422139167786
+    },
+    "stereo_pan_only": {
+      "name": "stereo_pan_only",
+      "channels": 2,
+      "spectral_centroid_hz": 7933.123492824285,
+      "stereo_width": 0.4609914851499476,
+      "dynamic_range_db": 7.512285232543945,
+      "reverb_decay_ratio": 0.33640578389167786,
+      "rms_level": 0.1058214008808136
+    },
+    "stereo_pan_full": {
+      "name": "stereo_pan_full",
+      "channels": 2,
+      "spectral_centroid_hz": 3844.9229269130974,
+      "stereo_width": 0.4630616607784245,
+      "dynamic_range_db": 7.8943772315979,
+      "reverb_decay_ratio": 0.3145240545272827,
+      "rms_level": 0.11562890559434891
+    },
+    "foa_to_stereo": {
+      "name": "foa_to_stereo",
+      "channels": 2,
+      "spectral_centroid_hz": 3668.923860126728,
+      "stereo_width": 0.25773441545932463,
+      "dynamic_range_db": 8.583706855773926,
+      "reverb_decay_ratio": 0.3446367383003235,
+      "rms_level": 0.3032512664794922
+    }
+  },
+  "foa": {
+    "foa_full": {
+      "name": "foa_full",
+      "channels": 4,
+      "spectral_centroid_hz": 3330.121383305404,
+      "stereo_width": "N/A (4ch FOA)",
+      "dynamic_range_db": 7.324289321899414,
+      "reverb_decay_ratio": 0.25948482751846313,
+      "rms_level": 0.1156139224767685,
+      "foa_w_energy": 0.11565028876066208,
+      "foa_xyz_energy": 0.20022819936275482,
+      "foa_directivity_ratio": 1.7313246726989746
+    }
+  }
+}

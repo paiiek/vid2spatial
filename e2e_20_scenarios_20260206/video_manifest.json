@@ -1,0 +1,202 @@
+[
+  {
+    "id": "01_guitar_acoustic",
+    "query": "acoustic guitar playing close up",
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "prompt": "acoustic guitar",
+    "category": "instrument",
+    "expected_motion": "small lateral + finger movement",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/01_guitar_acoustic.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "02_piano_playing",
+    "query": "piano playing hands close up",
+    "url": "",
+    "prompt": "piano",
+    "category": "instrument",
+    "expected_motion": "lateral hand movement",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/02_piano_playing.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "03_drums_playing",
+    "query": "drums playing performance",
+    "url": "",
+    "prompt": "drums",
+    "category": "instrument",
+    "expected_motion": "fast percussive movement",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/03_drums_playing.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "04_violin_playing",
+    "query": "violin playing solo performance",
+    "url": "",
+    "prompt": "violin",
+    "category": "instrument",
+    "expected_motion": "slow lateral bowing",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/04_violin_playing.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "05_soccer_kick",
+    "query": "soccer player kicking ball",
+    "url": "",
+    "prompt": "soccer ball",
+    "category": "sports",
+    "expected_motion": "fast multi-directional",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/05_soccer_kick.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "06_basketball_dribble",
+    "query": "basketball dribbling player",
+    "url": "",
+    "prompt": "basketball",
+    "category": "sports",
+    "expected_motion": "vertical bouncing + lateral",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/06_basketball_dribble.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "07_tennis_serve",
+    "query": "tennis serve slow motion",
+    "url": "",
+    "prompt": "tennis ball",
+    "category": "sports",
+    "expected_motion": "fast parabolic arc",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/07_tennis_serve.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "08_runner_track",
+    "query": "runner sprinting track",
+    "url": "",
+    "prompt": "runner",
+    "category": "sports",
+    "expected_motion": "fast lateral pass-by",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/08_runner_track.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "09_car_driving",
+    "query": "car driving street passing by",
+    "url": "",
+    "prompt": "car",
+    "category": "vehicle",
+    "expected_motion": "fast lateral pass-by",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/09_car_driving.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "10_motorcycle_road",
+    "query": "motorcycle riding road",
+    "url": "",
+    "prompt": "motorcycle",
+    "category": "vehicle",
+    "expected_motion": "fast approaching/receding",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/10_motorcycle_road.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "11_bicycle_park",
+    "query": "bicycle riding in park",
+    "url": "",
+    "prompt": "bicycle",
+    "category": "vehicle",
+    "expected_motion": "medium lateral",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/11_bicycle_park.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "12_train_passing",
+    "query": "train passing by station",
+    "url": "",
+    "prompt": "train",
+    "category": "vehicle",
+    "expected_motion": "fast lateral pass-by",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/12_train_passing.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "13_dog_running",
+    "query": "dog running in park",
+    "url": "",
+    "prompt": "dog",
+    "category": "animal",
+    "expected_motion": "fast random movement",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/13_dog_running.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "14_bird_flying",
+    "query": "bird flying sky",
+    "url": "",
+    "prompt": "bird",
+    "category": "animal",
+    "expected_motion": "3D flight path",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/14_bird_flying.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "15_cat_walking",
+    "query": "cat walking room",
+    "url": "",
+    "prompt": "cat",
+    "category": "animal",
+    "expected_motion": "slow meandering",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/15_cat_walking.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "16_horse_galloping",
+    "query": "horse galloping field",
+    "url": "",
+    "prompt": "horse",
+    "category": "animal",
+    "expected_motion": "fast lateral",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/16_horse_galloping.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "17_person_walking",
+    "query": "person walking sidewalk city",
+    "url": "",
+    "prompt": "person",
+    "category": "people",
+    "expected_motion": "steady lateral walk",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/17_person_walking.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "18_dancer_stage",
+    "query": "dancer performing on stage",
+    "url": "",
+    "prompt": "dancer",
+    "category": "people",
+    "expected_motion": "complex 2D movement",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/18_dancer_stage.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "19_chef_cooking",
+    "query": "chef cooking kitchen",
+    "url": "",
+    "prompt": "chef",
+    "category": "people",
+    "expected_motion": "small movement, depth changes",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/19_chef_cooking.mp4",
+    "downloaded": true
+  },
+  {
+    "id": "20_skateboarder_park",
+    "query": "skateboarder trick park",
+    "url": "",
+    "prompt": "skateboarder",
+    "category": "people",
+    "expected_motion": "fast multi-directional",
+    "local_path": "/home/seung/mmhoa/vid2spatial/e2e_20_scenarios_20260206/videos/20_skateboarder_park.mp4",
+    "downloaded": true
+  }
+]
