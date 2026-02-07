@@ -19,21 +19,22 @@ ENV/
 *.swp
 *.swo
 
-# Results (don't commit large output files)
-results/
-*.foa.wav
+# Audio/Video binaries (large, regenerable from scripts)
 *.wav
+*.foa.wav
 *.mp4
 *.avi
 
 # Weights (large models - download separately)
 weights/
+yolo11n.pt
 
-# Test outputs
+# Test artifacts
 out/
 test_data/
 test_outputs/
 test_videos/
+results/
 
 # Logs
 *.log
@@ -52,20 +53,14 @@ test_videos/
 data/
 !data/README.md
 
-# Archive (not needed for repo)
+# Archive (old versions, not needed in repo)
 archive/
 
 # WandB
 wandb/
 
-# Large experiment output directories (audio/video binaries)
-render_outputs_*/
-test_render_*/
-
-# YOLO weights
-yolo11n.pt
-
-# Experiment binary outputs (keep scripts and JSON/MD)
+# Experiment binary outputs (videos, audio, renders)
+# Scripts (.py), results (.json), and docs (.md) ARE tracked
 **/videos/
 **/audio_instrument/
 **/audio_foley/

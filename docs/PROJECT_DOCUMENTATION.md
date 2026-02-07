@@ -759,28 +759,30 @@ RTS 적용:    ─────────────────  (매우 부�
 
 ```
 vid2spatial/
-├── vid2spatial_pkg/
-│   ├── hybrid_tracker.py          # 핵심: 적응형 하이브리드 추적
-│   ├── trajectory_stabilizer.py   # RTS smoothing, 신뢰도 게이팅, depth_render 평활화
-│   ├── depth_utils.py             # 깊이 추정 및 매핑
-│   ├── foa_render.py              # FOA 인코딩 + 바이노럴 렌더링 (crossfeed / HRTF SOFA)
-│   ├── pipeline.py                # 전체 파이프라인 오케스트레이션
-│   ├── config.py                  # 설정 관리
-│   ├── vision.py                  # pixel_to_ray, ray_to_angles
-│   └── osc_sender.py              # 실시간 OSC 통신
-├── gt_eval_20260206/              # Synthetic GT 평가 (15 씬, az/el/dist 정확도)
-├── e2e_20_scenarios_20260206/     # 실제 비디오 20개 E2E 파이프라인
-├── sot_e2e_20260207/              # SOT 벤치마크 15 비디오
-│   ├── outputs/                   # E2E 파이프라인 결과
-│   ├── render_A_instrument/       # 악기 오디오 + crossfeed 바이노럴
-│   ├── render_B_foley/            # 폴리 오디오 + crossfeed 바이노럴
-│   ├── render_A_instrument_hrtf/  # 악기 오디오 + HRTF 바이노럴
-│   ├── render_B_foley_hrtf/       # 폴리 오디오 + HRTF 바이노럴
-│   ├── render_orig_hrtf/          # 원본 오디오 + HRTF 바이노럴
-│   └── hrtf_quality_analysis.json # HRTF vs crossfeed 정량 비교
-├── render_15_scenarios_20260206.py # 15 합성 시나리오 렌더
-├── tracking_ablation/             # 추적 ablation study
-└── eval/                          # 평가 결과
+├── vid2spatial_pkg/               # 핵심 패키지
+│   ├── hybrid_tracker.py              # 적응형 하이브리드 추적
+│   ├── trajectory_stabilizer.py       # RTS smoothing + depth_render 평활화
+│   ├── foa_render.py                  # FOA 인코딩 + 바이노럴 (crossfeed / HRTF SOFA)
+│   ├── pipeline.py                    # 전체 파이프라인 오케스트레이션
+│   ├── config.py                      # 설정 관리
+│   ├── vision.py                      # pixel_to_ray, ray_to_angles
+│   └── osc_sender.py                  # 실시간 OSC 통신
+├── experiments/                   # 실험 스크립트 + 결과
+│   ├── e2e_20_videos/                 # 실제 비디오 20개 E2E 파이프라인
+│   ├── gt_eval_synthetic/             # Synthetic GT 평가 (15 씬)
+│   ├── sot_15_videos/                 # SOT 벤치마크 15 비디오 + HRTF 렌더
+│   └── synthetic_render.py            # 15 합성 시나리오 렌더
+├── evaluation/                    # 평가 코드 + 결과
+│   ├── tracking_ablation/             # 추적 ablation study
+│   ├── ablation_output/               # 렌더러/베이스라인 ablation
+│   ├── comprehensive_results/         # 종합 평가 결과
+│   ├── tests/                         # 유닛 테스트
+│   └── plots/                         # 시각화
+├── docs/                          # 문서
+│   ├── PROJECT_DOCUMENTATION.md       # 프로젝트 종합 문서
+│   ├── ARCHITECTURE.md                # 시스템 아키텍처
+│   └── OSC_INTERFACE_SPEC.md          # OSC 프로토콜
+└── archive/                       # 이전 버전 (gitignored)
 ```
 
 ### B. 재현 방법

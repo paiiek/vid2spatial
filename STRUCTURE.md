@@ -1,62 +1,72 @@
 # Vid2Spatial Project Structure
 
-Last updated: 2026-02-04
+Last updated: 2026-02-07
 
-## Core Directories
+## Directory Layout
 
 ```
 vid2spatial/
-├── vid2spatial_pkg/     # Core Python package
-│   ├── hybrid_tracker.py    # Main tracker (DINO adaptive-K + robustness)
-│   ├── trajectory_stabilizer.py  # RTS smoother
-│   ├── foa_render.py        # FOA AmbiX rendering
-│   ├── osc_sender.py        # OSC streaming for DAW
-│   ├── depth_metric.py      # Depth estimation
-│   ├── vision.py            # Camera/geometry utilities
-│   └── ...
+├── vid2spatial_pkg/          # Core Python package
+│   ├── hybrid_tracker.py         # Adaptive-K hybrid tracker (DINO + SAM2)
+│   ├── trajectory_stabilizer.py  # RTS smoother + depth_render fix
+│   ├── foa_render.py             # FOA encoding + binaural (crossfeed / HRTF SOFA)
+│   ├── pipeline.py               # End-to-end pipeline orchestration
+│   ├── config.py                 # Configuration management
+│   ├── vision.py                 # Camera geometry (pixel_to_ray, ray_to_angles)
+│   ├── video_utils.py            # Video I/O utilities
+│   ├── depth_metric.py           # Depth estimation
+│   └── osc_sender.py             # OSC streaming for DAW
 │
-├── eval/                # Active evaluation scripts
-│   ├── comprehensive_results/   # Final evaluation data
-│   │   ├── FINAL_EVALUATION_REPORT.md
-│   │   ├── demos/               # Audio demos (FOA, stereo)
-│   │   └── *.json               # Metrics data
-│   ├── test_adaptive_k_and_rts.py
-│   ├── test_robustness_layer.py
-│   ├── test_osc_sender.py
-│   └── compare_hybrid_vs_redetect.py
+├── experiments/              # Experiment scripts + results
+│   ├── e2e_20_videos/            # 20 diverse real videos, E2E pipeline
+│   ├── gt_eval_synthetic/        # 15 synthetic GT scenes, param accuracy
+│   ├── sot_15_videos/            # 15 SOT benchmark videos + 30 re-renders
+│   │   ├── render_A_instrument_hrtf/  # HRTF binaural (instrument audio)
+│   │   ├── render_B_foley_hrtf/       # HRTF binaural (foley audio)
+│   │   ├── render_orig_hrtf/          # HRTF binaural (original audio)
+│   │   └── hrtf_quality_analysis.json # HRTF vs crossfeed comparison
+│   └── synthetic_render.py       # 15 synthetic scenario renderer
 │
-├── paper/               # ISMAR paper materials
+├── evaluation/               # Evaluation code + results
+│   ├── tracking_ablation/        # Tracker ablation study (SAM2 vs DINO vs Hybrid)
+│   ├── ablation_output/          # Renderer/baseline ablation results
+│   ├── comprehensive_results/    # Final comprehensive evaluation
+│   ├── tests/                    # Unit tests (tracker, OSC, robustness)
+│   ├── plots/                    # Evaluation plots (PNG)
+│   ├── baseline_ablation.py
+│   ├── foa_distance_validation.py
+│   └── FOA_DISTANCE_REPORT.md
+│
+├── docs/                     # Documentation
+│   ├── PROJECT_DOCUMENTATION.md  # Full project documentation (thesis)
+│   ├── ARCHITECTURE.md           # System architecture
+│   ├── OSC_INTERFACE_SPEC.md     # OSC protocol spec
 │   └── FINAL_EVALUATION_REPORT.md
 │
-├── test_videos/         # Test video assets
-├── weights/             # Model weights (YOLO, etc.)
-├── data/                # Dataset files
+├── archive/                  # Old versions (gitignored, 4.3GB)
+├── data/                     # Datasets (gitignored)
+├── weights/                  # Model weights (gitignored)
 │
+├── .gitignore
 ├── README.md
-├── requirements.txt
-└── archive/             # Non-essential files (old docs, logs, scripts)
+├── STRUCTURE.md
+├── pytest.ini
+└── requirements.txt
 ```
 
-## Key Files for ISMAR
+## Key Files
 
-1. **Core Implementation**
-   - `vid2spatial_pkg/hybrid_tracker.py` - Adaptive K-frame + robustness
-   - `vid2spatial_pkg/trajectory_stabilizer.py` - RTS smoother
-   - `vid2spatial_pkg/foa_render.py` - FOA rendering
-   - `vid2spatial_pkg/osc_sender.py` - DAW integration
+### Core Implementation
+- `vid2spatial_pkg/hybrid_tracker.py` — Adaptive K-frame detection + robustness layer
+- `vid2spatial_pkg/trajectory_stabilizer.py` — RTS smoother, depth_render smoothing
+- `vid2spatial_pkg/foa_render.py` — FOA AmbiX encoding + HRTF binaural via KEMAR SOFA
+- `vid2spatial_pkg/pipeline.py` — Full pipeline orchestration
 
-2. **Evaluation**
-   - `eval/comprehensive_results/FINAL_EVALUATION_REPORT.md` - Main results
-   - `eval/comprehensive_results/demos/` - Audio comparisons
+### Experiments
+- `experiments/sot_15_videos/` — 45 HRTF binaural files (15 orig + 15 instrument + 15 foley)
+- `experiments/gt_eval_synthetic/` — Parameter accuracy (Az MAE 0.68°, El MAE 0.18°)
+- `experiments/e2e_20_videos/` — 19/20 diverse real videos end-to-end
 
-3. **Paper**
-   - `paper/FINAL_EVALUATION_REPORT.md` - Paper-ready report
-
-## Archive Contents
-
-All non-essential files moved to `archive/`:
-- `docs_old/` - Old documentation
-- `logs/` - Training and debug logs
-- `scripts_old/` - Deprecated scripts
-- `eval_old/` - Old evaluation scripts
-- `results/`, `wandb/` - Old experiment results
+### Evaluation
+- `evaluation/tracking_ablation/` — SAM2 3.4% → Adaptive-K 100% amplitude
+- `evaluation/ablation_output/` — Renderer/baseline comparisons
