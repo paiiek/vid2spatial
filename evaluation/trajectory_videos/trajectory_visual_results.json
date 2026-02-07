@@ -1,0 +1,351 @@
+{
+  "gt_synthetic": [
+    {
+      "scene_id": "01_ball_lr_slow",
+      "frames": 150,
+      "px_err_mean": 4.483441916123711,
+      "px_err_max": 42.50294170078283,
+      "px_err_std": 5.080482743170723
+    },
+    {
+      "scene_id": "02_ball_lr_fast",
+      "frames": 150,
+      "px_err_mean": 4.367148336128842,
+      "px_err_max": 53.50233746214846,
+      "px_err_std": 6.075455773334845
+    },
+    {
+      "scene_id": "03_box_lr_mid",
+      "frames": 150,
+      "px_err_mean": 12.577558494119067,
+      "px_err_max": 55.00227258613053,
+      "px_err_std": 9.574763090747448
+    },
+    {
+      "scene_id": "04_sphere_approach",
+      "frames": 150,
+      "px_err_mean": 0.1906176790263228,
+      "px_err_max": 0.4999999976116669,
+      "px_err_std": 0.21696153946338043
+    },
+    {
+      "scene_id": "05_sphere_recede",
+      "frames": 150,
+      "px_err_mean": 0.5779990689859977,
+      "px_err_max": 0.7071067619813777,
+      "px_err_std": 0.10287729740527057
+    },
+    {
+      "scene_id": "06_cube_depth_osc",
+      "frames": 150,
+      "px_err_mean": 0.32265671518842026,
+      "px_err_max": 0.7071067619813777,
+      "px_err_std": 0.21474373029445878
+    },
+    {
+      "scene_id": "07_ball_diagonal",
+      "frames": 150,
+      "px_err_mean": 2.1026458473933607,
+      "px_err_max": 31.815871603331296,
+      "px_err_std": 4.560864843374047
+    },
+    {
+      "scene_id": "08_circle_arc",
+      "frames": 150,
+      "px_err_mean": 2.5016277502322555,
+      "px_err_max": 26.560573539796316,
+      "px_err_std": 3.591825881343851
+    },
+    {
+      "scene_id": "09_box_zigzag",
+      "frames": 150,
+      "px_err_mean": 8.68578700460469,
+      "px_err_max": 98.83446372111983,
+      "px_err_std": 18.785983365329503
+    },
+    {
+      "scene_id": "10_ball_circle_slow",
+      "frames": 150,
+      "px_err_mean": 4.399058605331767,
+      "px_err_max": 51.65510392185579,
+      "px_err_std": 7.278319203223319
+    },
+    {
+      "scene_id": "11_ball_circle_fast",
+      "frames": 150,
+      "px_err_mean": 9.720013789742637,
+      "px_err_max": 22.02195556531917,
+      "px_err_std": 5.128240931207769
+    },
+    {
+      "scene_id": "12_ball_static_center",
+      "frames": 150,
+      "px_err_mean": 0.4999999976116669,
+      "px_err_max": 0.4999999976116669,
+      "px_err_std": 0.0
+    },
+    {
+      "scene_id": "13_ball_static_left",
+      "frames": 150,
+      "px_err_mean": 8.806000465710895e-06,
+      "px_err_max": 8.806000465710895e-06,
+      "px_err_std": 0.0
+    },
+    {
+      "scene_id": "14_ball_figure8",
+      "frames": 150,
+      "px_err_mean": 11.908932513352013,
+      "px_err_max": 59.17135999022935,
+      "px_err_std": 7.721047877038623
+    },
+    {
+      "scene_id": "15_ball_spiral_in",
+      "frames": 150,
+      "px_err_mean": 8.087420667915433,
+      "px_err_max": 18.071394770721,
+      "px_err_std": 4.360248060697535
+    }
+  ],
+  "e2e_real": [
+    {
+      "video_id": "01_guitar_acoustic",
+      "frames": 250,
+      "mean_conf": 0.8568475517272948,
+      "min_conf": 0.7622472286224365,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "02_piano_playing",
+      "frames": 240,
+      "mean_conf": 0.4595904696236054,
+      "min_conf": 0.35798003375530246,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "03_drums_playing",
+      "frames": 300,
+      "mean_conf": 0.38622693683505055,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "04_violin_playing",
+      "frames": 300,
+      "mean_conf": 0.4484073530435562,
+      "min_conf": 0.27,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "05_soccer_kick",
+      "frames": 300,
+      "mean_conf": 0.5811192074219386,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "06_basketball_dribble",
+      "frames": 300,
+      "mean_conf": 0.4027969601750374,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "07_tennis_serve",
+      "frames": 300,
+      "mean_conf": 0.34817733127077416,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "08_runner_track",
+      "frames": 250,
+      "mean_conf": 0.533184310925007,
+      "min_conf": 0.3688550502061844,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "09_car_driving",
+      "frames": 300,
+      "mean_conf": 0.4765205582976341,
+      "min_conf": 0.3905137270689011,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "10_motorcycle_road",
+      "frames": 250,
+      "mean_conf": 0.5309265653967857,
+      "min_conf": 0.22327369004487993,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "11_bicycle_park",
+      "frames": 240,
+      "mean_conf": 0.28945217209309343,
+      "min_conf": 0.16537195891141893,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "12_train_passing",
+      "frames": 300,
+      "mean_conf": 0.5894303999086222,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "13_dog_running",
+      "frames": 300,
+      "mean_conf": 0.5156080838282903,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "15_cat_walking",
+      "frames": 250,
+      "mean_conf": 0.27248450675964353,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "16_horse_galloping",
+      "frames": 300,
+      "mean_conf": 0.8077342490355174,
+      "min_conf": 0.5425917148590088,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "17_person_walking",
+      "frames": 300,
+      "mean_conf": 0.6009857869942984,
+      "min_conf": 0.506409752368927,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "18_dancer_stage",
+      "frames": 240,
+      "mean_conf": 0.5160376300911109,
+      "min_conf": 0.40633688271045687,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "19_chef_cooking",
+      "frames": 240,
+      "mean_conf": 0.4631056618938843,
+      "min_conf": 0.3439632922410965,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "20_skateboarder_park",
+      "frames": 240,
+      "mean_conf": 0.29332568760712946,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    }
+  ],
+  "sot_benchmark": [
+    {
+      "video_id": "01_dog_frisbee",
+      "frames": 300,
+      "mean_conf": 0.7333173838456473,
+      "min_conf": 0.328136944770813,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "02_cat_jumping",
+      "frames": 250,
+      "mean_conf": 0.7637551999092103,
+      "min_conf": 0.6767235755920411,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "03_horse_running",
+      "frames": 300,
+      "mean_conf": 0.19986850957473115,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "04_car_highway",
+      "frames": 250,
+      "mean_conf": 0.22394329210758213,
+      "min_conf": 0.17515473961830139,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "05_motorbike_road",
+      "frames": 300,
+      "mean_conf": 0.19975963399211563,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "06_boat_water",
+      "frames": 250,
+      "mean_conf": 0.7837392879486086,
+      "min_conf": 0.6559928476810456,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "07_skier_downhill",
+      "frames": 250,
+      "mean_conf": 0.5581969910502433,
+      "min_conf": 0.3289491176605225,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "08_surfer_wave",
+      "frames": 300,
+      "mean_conf": 0.40243698205749195,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "09_bmx_rider",
+      "frames": 300,
+      "mean_conf": 0.595132885813713,
+      "min_conf": 0.46115745306015016,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "10_dancer_solo",
+      "frames": 300,
+      "mean_conf": 0.6822530132929484,
+      "min_conf": 0.6022773742675782,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "11_gymnast_floor",
+      "frames": 240,
+      "mean_conf": 0.6998248954862355,
+      "min_conf": 0.4293681800365448,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "12_parkour_runner",
+      "frames": 298,
+      "mean_conf": 0.29928232621026524,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "13_drone_flying",
+      "frames": 300,
+      "mean_conf": 0.6161893519103527,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "14_kite_flying",
+      "frames": 300,
+      "mean_conf": 0.24358969727158541,
+      "min_conf": 0.18000000000000002,
+      "tracked_pct": 100.0
+    },
+    {
+      "video_id": "15_ball_bouncing",
+      "frames": 300,
+      "mean_conf": 0.7328858777284621,
+      "min_conf": 0.5166543006896973,
+      "tracked_pct": 100.0
+    }
+  ]
+}
