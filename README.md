@@ -1,4 +1,4 @@
-# Vid2Spatial: Video-to-Spatial Audio Generation
+# Vid2Spatial
 
 **Text-guided video object tracking for spatial audio authoring with DINO Adaptive-K re-detection and metric depth estimation.**
 
