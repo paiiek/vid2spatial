@@ -65,21 +65,14 @@ def interpolate_angles_distance(frames: List[Dict], T: int, sr: int) -> Tuple[np
     az_s, el_s = interpolate_angles(frames, T, sr)
     idx = np.array([f["frame"] for f in frames], dtype=np.float32)
 
-    # Determine which depth field to use
-    if any("depth_render" in f for f in frames):
-        # Best: explicit render value
-        dist = np.array([float(f.get("depth_render", f.get("dist_m", 1.0))) for f in frames], dtype=np.float32)
-    elif any("depth_blended" in f for f in frames):
-        # Fallback: depth_blended (enhanced)
-        dist = np.array([float(f.get("depth_blended", f.get("dist_m", 1.0))) for f in frames], dtype=np.float32)
-    elif any("dist_m_raw" in f for f in frames):
-        # Fallback: raw metric depth
-        dist = np.array([float(f.get("dist_m_raw", 1.0)) for f in frames], dtype=np.float32)
-    elif any("dist_m" in f for f in frames):
-        # Fallback: dist_m (may be smoothed)
-        dist = np.array([float(f.get("dist_m", 1.0)) for f in frames], dtype=np.float32)
-    else:
-        dist = np.ones((len(frames),), np.float32)
+    # Per-frame depth with priority: depth_render > depth_blended > dist_m_raw > dist_m > 1.0
+    _depth_keys = ("depth_render", "depth_blended", "dist_m_raw", "dist_m")
+    def _get_depth(f):
+        for k in _depth_keys:
+            if k in f:
+                return float(f[k])
+        return 1.0
+    dist = np.array([_get_depth(f) for f in frames], dtype=np.float32)
 
     # Get d_rel (normalized distance 0-1) - use pre-computed if available
     if any("d_rel" in f for f in frames):

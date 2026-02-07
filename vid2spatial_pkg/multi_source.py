@@ -228,7 +228,7 @@ def encode_multi_source_foa(
         T = len(audio)
 
         # Interpolate trajectory to audio timeline
-        az_s, el_s, dist_s = interpolate_angles_distance(traj["frames"], T=T, sr=sr)
+        az_s, el_s, dist_s, _d_rel_s = interpolate_angles_distance(traj["frames"], T=T, sr=sr)
 
         # Apply distance-based gain (inverse square law)
         # Reference distance: 1m

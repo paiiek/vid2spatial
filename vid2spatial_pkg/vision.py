@@ -786,7 +786,7 @@ def initialize_depth_backend(
     if depth_backend in ("auto", "midas") and use_midas:
         try:
             device = "cuda" if cv2.cuda.getCudaEnabledDeviceCount() > 0 else "cpu"
-            midas_bundle = _load_midas(device)
+            midas_bundle = _load_midas()
             print("[info] Using MiDaS backend (relative depth)")
             return None, midas_bundle, False
         except Exception:

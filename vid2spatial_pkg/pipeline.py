@@ -308,7 +308,7 @@ class SpatialAudioPipeline:
 
         # Interpolate angles and distance
         print('[info] Interpolating trajectory to audio timeline...')
-        az_s, el_s, dist_s = interpolate_angles_distance(trajectory["frames"], T=T, sr=sr)
+        az_s, el_s, dist_s, d_rel_s = interpolate_angles_distance(trajectory["frames"], T=T, sr=sr)
 
         # Smooth angles
         print('[info] Smoothing angles...')
