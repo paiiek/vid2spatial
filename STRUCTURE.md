@@ -6,18 +6,38 @@ Last updated: 2026-02-10
 
 ```
 vid2spatial/
-├── vid2spatial_pkg/          # Core Python package
-│   ├── hybrid_tracker.py         # Adaptive-K hybrid tracker (DINO + YOLO/ByteTrack)
-│   ├── trajectory_stabilizer.py  # RTS smoother + depth stabilization
-│   ├── foa_render.py             # FOA AmbiX + HRTF binaural + stereo pan baseline
+├── vid2spatial_pkg/          # Core Python package (19 modules)
+│   │
+│   │  ── Pipeline ──
 │   ├── pipeline.py               # End-to-end pipeline orchestration
 │   ├── config.py                 # Configuration management
+│   ├── multi_source.py           # Multi-source FOA mixing
+│   │
+│   │  ── Detection & Tracking ──
+│   ├── hybrid_tracker.py         # Adaptive-K hybrid tracker (DINO + YOLO/ByteTrack)
 │   ├── vision.py                 # Camera geometry (pixel_to_ray, ray_to_angles)
-│   ├── video_utils.py            # Video I/O utilities
+│   ├── color_tracker.py          # Color-based tracking backend
+│   ├── point_tracker.py          # Single-point tracking backend
+│   ├── skeleton_tracker.py       # Human skeleton keypoint tracking
+│   ├── ostrack_wrapper.py        # OSTrack integration wrapper
+│   ├── sam2_adapter.py           # SAM2 mask refinement adapter
+│   │
+│   │  ── Trajectory Processing ──
+│   ├── trajectory_stabilizer.py  # RTS smoother + depth stabilization
+│   ├── temporal_smoother.py      # Temporal filtering utilities
+│   │
+│   │  ── Depth Estimation ──
 │   ├── depth_metric.py           # Depth Anything V2 integration
-│   ├── depth_utils.py            # Depth blending utilities
+│   ├── depth_utils.py            # Depth blending + confidence weighting
+│   ├── depth_anything_adapter.py # Depth model backend adapter
+│   │
+│   │  ── Audio Rendering ──
+│   ├── foa_render.py             # FOA AmbiX + HRTF binaural + stereo pan
+│   ├── irgen.py                  # Room impulse response synthesis
+│   │
+│   │  ── Output & Utilities ──
 │   ├── osc_sender.py             # OSC streaming for DAW
-│   └── multi_source.py           # Multi-source FOA mixing
+│   └── video_utils.py            # Video I/O, scene cut/zoom detection
 │
 ├── experiments/              # Experiment scripts + results
 │   ├── e2e_20_videos/            # 20 diverse real videos, E2E pipeline
@@ -29,6 +49,7 @@ vid2spatial/
 │   ├── tracking_ablation/        # (A) Trajectory reliability ablation
 │   ├── ablation_output/          # Renderer/baseline ablation
 │   ├── comprehensive_results/    # (B-C) Control + depth stability results
+│   ├── trajectory_videos/        # Trajectory visualization + reports
 │   ├── listening_test/           # (D) Web-based perceptual evaluation
 │   │   ├── index.html                # Listening test interface
 │   │   ├── server.py                 # HTTP server + response saving
@@ -47,7 +68,13 @@ vid2spatial/
 │   ├── FINAL_EVALUATION_REPORT_20260210.md # Comprehensive evaluation
 │   └── OSC_INTERFACE_SPEC_20260210.md     # OSC protocol spec
 │
-├── archive/                  # Old versions (gitignored)
+├── archive/                  # Old versions + unused modules (gitignored)
+│   ├── pkg_unused/               # 13 deprecated vid2spatial_pkg modules
+│   ├── scripts/                  # Old training/test scripts
+│   ├── evaluation_old/           # Previous evaluation code
+│   ├── docs_old/                 # Development documentation
+│   └── results/                  # Historical experiment results
+│
 ├── data/                     # Datasets (gitignored)
 ├── weights/                  # Model weights (gitignored)
 │

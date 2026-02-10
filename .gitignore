@@ -56,8 +56,10 @@ data/
 # Archive (old versions, not needed in repo)
 archive/
 
-# Listening test responses (participant data)
+# Listening test (participant data + stimuli binaries)
 evaluation/listening_test/responses/
+evaluation/listening_test/stimuli/*
+!evaluation/listening_test/stimuli/config.json
 
 # WandB
 wandb/

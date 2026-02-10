@@ -207,47 +207,35 @@ pipeline.process(
 
 ```
 vid2spatial/
-├── vid2spatial_pkg/              # Core Python package
+├── vid2spatial_pkg/              # Core Python package (19 modules)
+│   ├── pipeline.py                   # End-to-end pipeline orchestration
 │   ├── hybrid_tracker.py             # Adaptive-K tracker (DINO + YOLO/ByteTrack)
 │   ├── trajectory_stabilizer.py      # RTS smoother + depth stabilization
-│   ├── foa_render.py                 # FOA AmbiX + HRTF binaural + stereo pan baseline
-│   ├── pipeline.py                   # End-to-end pipeline orchestration
-│   ├── osc_sender.py                 # OSC streaming for DAW
+│   ├── foa_render.py                 # FOA AmbiX + HRTF binaural + stereo pan
 │   ├── vision.py                     # Camera geometry (pixel→ray→angles)
 │   ├── depth_metric.py               # Depth Anything V2 integration
-│   ├── depth_utils.py                # Depth blending utilities
-│   ├── video_utils.py                # Video I/O, zoom detection
-│   ├── config.py                     # Configuration management
-│   └── multi_source.py               # Multi-source FOA mixing
+│   ├── depth_utils.py                # Depth blending + confidence weighting
+│   ├── osc_sender.py                 # OSC streaming for DAW
+│   └── ...                           # + 11 supporting modules
 │
 ├── experiments/                  # Experiment scripts & results
 │   ├── e2e_20_videos/                # 20 real videos, end-to-end
 │   ├── gt_eval_synthetic/            # 15 synthetic GT scenes
-│   ├── sot_15_videos/                # SOT benchmark + HRTF binaural renders
+│   ├── sot_15_videos/                # SOT benchmark + HRTF binaural
 │   └── synthetic_render.py           # Synthetic scenario renderer
 │
 ├── evaluation/                   # Evaluation code & results
-│   ├── tracking_ablation/            # SAM2 vs DINO vs Adaptive-K ablation
+│   ├── tracking_ablation/            # (A) Trajectory reliability ablation
+│   ├── comprehensive_results/        # (B-C) Control + depth stability
 │   ├── ablation_output/              # Renderer/baseline ablation
-│   ├── comprehensive_results/        # Final evaluation report
-│   ├── listening_test/               # Web-based perceptual evaluation
-│   │   ├── index.html                    # Listening test interface
-│   │   ├── server.py                     # HTTP server + response saving
-│   │   ├── prepare_stimuli.py            # Stimuli rendering script
-│   │   └── analyze_responses.py          # Response analysis
+│   ├── listening_test/               # (D) Web-based perceptual evaluation
 │   ├── tests/                        # Unit tests
 │   └── plots/                        # Evaluation plots
 │
 ├── docs/                         # Documentation (dated versions)
-│   ├── PROJECT_DOCUMENTATION_20260210.md
-│   ├── ARCHITECTURE_20260210.md
-│   ├── PERCEPTUAL_EVALUATION_20260210.md
-│   ├── FINAL_EVALUATION_REPORT_20260210.md
-│   └── OSC_INTERFACE_SPEC_20260210.md
-│
-├── weights/                      # Model weights (gitignored)
-├── data/                         # Datasets (gitignored)
 ├── archive/                      # Old versions (gitignored)
+├── data/                         # Datasets (gitignored)
+├── weights/                      # Model weights (gitignored)
 │
 ├── .gitignore
 ├── STRUCTURE.md
