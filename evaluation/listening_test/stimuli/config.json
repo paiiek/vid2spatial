@@ -2,144 +2,86 @@
   "title": "Vid2Spatial Perceptual Evaluation",
   "description": "Evaluate spatial audio quality for video-guided spatial audio rendering",
   "instructions": {
-    "general": "Please use headphones for the entire test. For each clip, watch the video and listen to the audio simultaneously. You will rate two versions (presented in random order as 'Version 1' and 'Version 2') on four dimensions using a 7-point scale.",
+    "general": "Please use headphones for the entire test. For each clip, watch the video and listen to the audio simultaneously. You will rate three versions on four dimensions using a 5-point scale.",
     "environment": "Use over-ear headphones in a quiet room. Adjust volume to a comfortable level before starting."
   },
   "scenes": [
-    {
-      "id": "08_surfer_wave",
-      "motion": "fast",
-      "category": "sports",
-      "duration_s": 10.0,
-      "sample_rate": 48000
-    },
-    {
-      "id": "12_parkour_runner",
-      "motion": "fast",
-      "category": "person",
-      "duration_s": 10.0,
-      "sample_rate": 48000
-    },
-    {
-      "id": "07_skier_downhill",
-      "motion": "fast",
-      "category": "sports",
-      "duration_s": 10.0,
-      "sample_rate": 48000
-    },
-    {
-      "id": "10_dancer_solo",
-      "motion": "moderate",
-      "category": "person",
-      "duration_s": 10.0,
-      "sample_rate": 48000
-    },
-    {
-      "id": "01_dog_frisbee",
-      "motion": "moderate",
-      "category": "animal",
-      "duration_s": 10.0,
-      "sample_rate": 48000
-    },
-    {
-      "id": "09_bmx_rider",
-      "motion": "moderate",
-      "category": "sports",
-      "duration_s": 10.0,
-      "sample_rate": 48000
-    },
-    {
-      "id": "06_boat_water",
-      "motion": "slow",
-      "category": "vehicle",
-      "duration_s": 10.0,
-      "sample_rate": 48000
-    },
-    {
-      "id": "15_ball_bouncing",
-      "motion": "slow",
-      "category": "object",
-      "duration_s": 10.0,
-      "sample_rate": 48000
-    }
+    {"id": "car-10",        "motion": "moderate", "category": "vehicle",     "instrument": "trumpet",     "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "dog-14",        "motion": "fast",     "category": "animal",      "instrument": "violin",      "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "drone-2",       "motion": "slow",     "category": "drone",       "instrument": "oboe",        "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "guitar-9",      "motion": "static",   "category": "instrument",  "instrument": "cello",       "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "horse-1",       "motion": "fast",     "category": "animal",      "instrument": "flute",       "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "motorcycle-6",  "motion": "moderate", "category": "vehicle",     "instrument": "saxophone",   "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "skateboard-18", "motion": "moderate", "category": "sports",      "instrument": "clarinet",    "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "train-17",      "motion": "slow",     "category": "vehicle",     "instrument": "trombone",    "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "dog-15",        "motion": "moderate", "category": "animal",      "instrument": "viola",       "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "horse-15",      "motion": "fast",     "category": "animal",      "instrument": "horn",        "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "car-5",         "motion": "slow",     "category": "vehicle",     "instrument": "bassoon",     "duration_s": 10.0, "sample_rate": 48000},
+    {"id": "motorcycle-17", "motion": "moderate", "category": "vehicle",     "instrument": "tuba",        "duration_s": 10.0, "sample_rate": 48000}
   ],
   "conditions": [
     {
       "id": "proposed",
       "file": "proposed.wav",
       "blind_label": null,
-      "description": "Proposed: FOA + KEMAR HRTF binaural"
+      "description": "Proposed: KEMAR HRTF binaural (50ms OLA, Hann window) + d_rel gain/LPF + reverb"
     },
     {
       "id": "baseline",
       "file": "baseline.wav",
       "blind_label": null,
-      "description": "Baseline: Stereo pan + distance reverb"
+      "description": "Baseline: Stereo pan (sin law) + d_rel gain/LPF + reverb"
     },
     {
       "id": "mono",
       "file": "mono.wav",
-      "blind_label": "Mono",
+      "blind_label": "Mono Reference",
       "description": "Mono anchor (no spatialization)"
     }
   ],
   "questions": [
     {
       "id": "alignment",
-      "text": "Audiovisual Alignment",
-      "instruction": "How well does the sound position match the visual object location?",
-      "anchors": {
-        "1": "Audio seems unrelated to video position",
-        "4": "Approximate match, some noticeable offset",
-        "7": "Audio clearly follows the object in the scene"
-      }
+      "text": "Spatial Alignment",
+      "instruction": "How well does the sound position match the visual object?",
+      "anchors": {"1": "Completely mismatched", "3": "Approximate match, some noticeable offset", "5": "Precisely follows the object"}
     },
     {
       "id": "smoothness",
       "text": "Motion Smoothness",
-      "instruction": "How smooth and continuous is the spatial audio movement?",
-      "anchors": {
-        "1": "Frequent jumps, pops, or instability",
-        "4": "Mostly smooth with occasional artifacts",
-        "7": "Continuous, stable, artifact-free motion"
-      }
+      "instruction": "How smooth and natural is the spatial audio movement?",
+      "anchors": {"1": "Severe clicks/jumps", "3": "Mostly smooth with occasional artifacts", "5": "Completely natural and smooth"}
     },
     {
       "id": "depth",
-      "text": "Depth Plausibility",
-      "instruction": "How natural are the near/far distance changes in the audio?",
-      "anchors": {
-        "1": "No sense of distance or depth",
-        "4": "Some distance perception but not always convincing",
-        "7": "Natural and convincing near/far changes"
-      }
+      "text": "Depth Perception",
+      "instruction": "How convincing are the near/far distance changes?",
+      "anchors": {"1": "No sense of distance", "3": "Some distance perception but not always convincing", "5": "Natural and convincing distance changes"}
     },
     {
       "id": "overall",
-      "text": "Overall Usefulness",
-      "instruction": "How useful would this spatial audio be for immersive content creation?",
-      "anchors": {
-        "1": "Unusable \u2014 distracting or incorrect",
-        "4": "Usable with noticeable limitations",
-        "7": "Ready for production \u2014 enhances the experience"
-      }
+      "text": "Overall Quality",
+      "instruction": "Overall, how would you rate this spatial audio?",
+      "anchors": {"1": "Bad", "3": "Fair", "5": "Excellent"}
     }
   ],
-  "scale": {
-    "min": 1,
-    "max": 7,
-    "type": "mos"
-  },
+  "scale": {"min": 1, "max": 5, "type": "mos"},
   "design": {
-    "conditions_per_clip": [
-      "proposed",
-      "baseline"
-    ],
+    "conditions_per_clip": ["proposed", "baseline", "mono"],
     "mono_anchor": true,
     "blind": true,
     "randomize_condition_order": true,
     "randomize_clip_order": true,
     "uses_video": true,
-    "note": "Mono anchor shown once per clip as reference point, not rated in pairwise comparison"
+    "loudness_normalization": {
+      "method": "RMS",
+      "target_rms": 0.08,
+      "target_dbfs": -22,
+      "verified": true,
+      "spread": 0.0,
+      "all_12_clips_pass": true
+    },
+    "audio_source": "spatamb/Dataset (studio-quality separated instruments, 48kHz mono, 12 unique instruments)",
+    "note": "Proposed vs Baseline: double-blind (random Version 1/2). Mono: open label anchor."
   }
 }

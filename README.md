@@ -1,24 +1,25 @@
 # Vid2Spatial
 
-**Text-guided video object tracking → 3D spatial trajectory → First-Order Ambisonics (FOA) / HRTF Binaural / OSC for DAW**
+**A deterministic vision-guided control pipeline for spatial audio authoring**
+
+Extracts stable spatial control trajectories from video and outputs FOA / HRTF Binaural / OSC for DAW integration.
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
 
 ---
 
-## What Is This?
+## Contributions
 
-Vid2Spatial takes a **video** and a **text prompt** (e.g., "person", "guitar"), detects and tracks the object across frames, estimates its 3D position (azimuth, elevation, distance), and generates spatial audio that follows the object's trajectory.
-
-**Outputs**:
-- **FOA (AmbiX)**: 4-channel First-Order Ambisonics WAV (W, Y, Z, X — ACN/SN3D)
-- **HRTF Binaural**: Stereo WAV rendered via KEMAR HRTF (SOFA) for headphone listening
-- **OSC Stream**: Real-time spatial parameters to DAW (Reaper, Max/MSP, etc.)
+1. **C1. Deterministic vision-guided control pipeline** for spatial audio authoring
+2. **C2. Adaptive-K tracking** that prevents trajectory collapse in fast motion
+3. **C3. RTS-based trajectory smoothing** preserving motion amplitude
+4. **C4. Confidence-weighted depth blending** for stable distance control
+5. **C5. FOA/OSC dual output** for rendering and DAW authoring workflows
 
 ---
 
-## Pipeline Overview
+## Pipeline
 
 ```
 Video + Text Prompt + Audio
@@ -42,10 +43,10 @@ Video + Text Prompt + Audio
          │
          ▼
 ┌─────────────────────────────────────────────────┐
-│  3. Dual-Layer Depth Estimation                 │
+│  3. Depth Stability Module                      │
 │     Layer 1: Depth Anything V2 Metric (meters)   │
-│     Layer 2: BBox-scale proxy (fast response)    │
-│     → Confidence-weighted blending               │
+│     Layer 2: BBox-scale proxy (smooth response)  │
+│     → Confidence-weighted blending (60% jitter↓) │
 └─────────────────────────────────────────────────┘
          │
          ▼
@@ -56,9 +57,10 @@ Video + Text Prompt + Audio
          │
          ▼
 ┌─────────────────────────────────────────────────┐
-│  5. RTS Smoother (offline) / EMA (realtime)     │
+│  5. RTS Smoother (93-97% jerk reduction)        │
 │     Rauch-Tung-Striebel optimal smoothing        │
-│     → 93-97% jerk reduction                      │
+│     Preserves motion amplitude while removing    │
+│     high-frequency jitter                        │
 └─────────────────────────────────────────────────┘
          │
          ├──→ FOA AmbiX 4ch WAV
@@ -68,24 +70,40 @@ Video + Text Prompt + Audio
 
 ---
 
-## Performance
+## Evaluation Results
 
-| Metric | SAM2-only | Proposed (Adaptive-K + RTS) | Improvement |
-|--------|-----------|------------------------------|-------------|
+### Trajectory Reliability (C2)
+
+| Metric | SAM2 | Proposed (Adaptive-K + RTS) | Improvement |
+|--------|------|------------------------------|-------------|
 | **Amplitude (0.6Hz)** | 3.4% | **100.0%** | 29x |
 | **MAE** | 142.9px | **16.1px** | 9x |
 | **Velocity correlation** | -0.088 | **0.930** | Recovered |
-| **Jerk (after RTS)** | 0.037* | **0.026** | Lower |
-| **Real video win-rate** | — | **8/13 (62%)** | Majority |
 | **FPS** | 13.5 | **26.4** | 2x faster |
 
 *SAM2's low jerk is misleading — the trajectory has near-zero amplitude (stationary).
 
-| Depth Enhancement | Result |
-|-------------------|--------|
-| BBox-proxy blending | 60% jitter reduction |
-| Adaptive depth stride | 85% compute savings |
-| RTS depth smoothing | 80.9x jerk reduction |
+### Control Stability (C3)
+
+| Smoothing | Median Jerk | Reduction |
+|-----------|-------------|-----------|
+| None | 0.0230 | — |
+| EMA (α=0.3) | 0.0115 | 50% |
+| **RTS** | **0.0018** | **92%** |
+
+### Depth Stability (C4)
+
+| Method | Jitter | Improvement |
+|--------|--------|-------------|
+| Metric only | 1.00x | — |
+| BBox proxy only | 0.65x | 35%↓ |
+| **Blended (proposed)** | **0.40x** | **60%↓** |
+
+### Perceptual Evaluation (In Progress)
+
+- 12 video clips × 3 conditions (HRTF binaural / stereo pan / mono anchor)
+- 4 MOS dimensions: Spatial Alignment, Motion Smoothness, Depth Perception, Overall Quality
+- Web-based listening test, 25 participants target
 
 ---
 
@@ -105,7 +123,6 @@ Weights are not included in the repository (gitignored). Download and place in `
 
 - **Grounding DINO** — text-guided object detection
 - **Depth Anything V2 Metric** — monocular depth estimation
-- **SAM2** (optional) — segmentation for comparison
 
 ### 3. Basic Usage
 
@@ -137,22 +154,18 @@ render_foa_from_trajectory(
 
 ### 4. HRTF Binaural Rendering
 
-For headphone-optimized output using a KEMAR HRTF (SOFA file):
-
 ```python
-render_foa_from_trajectory(
+from vid2spatial_pkg.foa_render import render_binaural_from_trajectory
+
+render_binaural_from_trajectory(
     audio_path="input.wav",
     trajectory={"frames": smoothed},
     output_path="output_binaural.wav",
-    sofa_path="/path/to/kemar.sofa",  # HRTF file
+    sofa_path="/path/to/kemar.sofa",
 )
 ```
 
-The HRTF renderer uses 8-speaker virtual decode with nearest-neighbor HRIR convolution.
-Compared to the default crossfeed method, HRTF provides:
-- 3.6x stronger high-frequency spectral differentiation (pinna cues)
-- More natural ILD (Interaural Level Difference) patterns
-- Lower interaural coherence (better spatial separation)
+Direct HRTF convolution via KEMAR SOFA with 50ms overlap-add (Hann window), providing full ILD, ITD, and pinna cues.
 
 ### 5. OSC Streaming (DAW Integration)
 
@@ -170,11 +183,9 @@ sender.stream_trajectory(trajectory, fps=30, realtime=True)
 |---------|-------|-------------|
 | `/vid2spatial/azimuth` | -180 to 180 | Degrees |
 | `/vid2spatial/elevation` | -90 to 90 | Degrees |
-| `/vid2spatial/distance` | 0 to 1 | Normalized (1=near, 0=far) |
-| `/vid2spatial/distance_m` | meters | Raw metric distance (alt mode) |
+| `/vid2spatial/distance` | 0 to 1 | Normalized |
 | `/vid2spatial/velocity` | deg/s | Angular velocity |
-| `/vid2spatial/timecode` | seconds | Sync reference |
-| `/vid2spatial/spatial` | [az, el, dist, vel, tc] | Bundled atomic message |
+| `/vid2spatial/spatial` | [az, el, dist, vel, tc] | Bundled message |
 
 ### 6. End-to-End Pipeline
 
@@ -197,79 +208,64 @@ pipeline.process(
 ```
 vid2spatial/
 ├── vid2spatial_pkg/              # Core Python package
-│   ├── hybrid_tracker.py             # Adaptive-K tracker (DINO + SAM2 + YOLO/ByteTrack)
-│   ├── trajectory_stabilizer.py      # RTS smoother + Kalman + 1-Euro filter
-│   ├── foa_render.py                 # FOA AmbiX encoding + HRTF binaural + crossfeed
+│   ├── hybrid_tracker.py             # Adaptive-K tracker (DINO + YOLO/ByteTrack)
+│   ├── trajectory_stabilizer.py      # RTS smoother + depth stabilization
+│   ├── foa_render.py                 # FOA AmbiX + HRTF binaural + stereo pan baseline
 │   ├── pipeline.py                   # End-to-end pipeline orchestration
 │   ├── osc_sender.py                 # OSC streaming for DAW
 │   ├── vision.py                     # Camera geometry (pixel→ray→angles)
 │   ├── depth_metric.py               # Depth Anything V2 integration
+│   ├── depth_utils.py                # Depth blending utilities
 │   ├── video_utils.py                # Video I/O, zoom detection
 │   ├── config.py                     # Configuration management
 │   └── multi_source.py               # Multi-source FOA mixing
 │
 ├── experiments/                  # Experiment scripts & results
 │   ├── e2e_20_videos/                # 20 real videos, end-to-end
-│   ├── gt_eval_synthetic/            # 15 synthetic GT scenes (Az MAE 0.68°, El MAE 0.18°)
+│   ├── gt_eval_synthetic/            # 15 synthetic GT scenes
 │   ├── sot_15_videos/                # SOT benchmark + HRTF binaural renders
 │   └── synthetic_render.py           # Synthetic scenario renderer
 │
 ├── evaluation/                   # Evaluation code & results
-│   ├── tracking_ablation/            # SAM2 vs DINO vs Hybrid ablation
+│   ├── tracking_ablation/            # SAM2 vs DINO vs Adaptive-K ablation
 │   ├── ablation_output/              # Renderer/baseline ablation
 │   ├── comprehensive_results/        # Final evaluation report
+│   ├── listening_test/               # Web-based perceptual evaluation
+│   │   ├── index.html                    # Listening test interface
+│   │   ├── server.py                     # HTTP server + response saving
+│   │   ├── prepare_stimuli.py            # Stimuli rendering script
+│   │   └── analyze_responses.py          # Response analysis
 │   ├── tests/                        # Unit tests
 │   └── plots/                        # Evaluation plots
 │
-├── docs/                         # Documentation
-│   ├── PROJECT_DOCUMENTATION.md      # Full project documentation
-│   ├── ARCHITECTURE.md               # System architecture
-│   ├── OSC_INTERFACE_SPEC.md         # OSC protocol specification
-│   └── FINAL_EVALUATION_REPORT.md    # Evaluation results
+├── docs/                         # Documentation (dated versions)
+│   ├── PROJECT_DOCUMENTATION_20260210.md
+│   ├── ARCHITECTURE_20260210.md
+│   ├── PERCEPTUAL_EVALUATION_20260210.md
+│   ├── FINAL_EVALUATION_REPORT_20260210.md
+│   └── OSC_INTERFACE_SPEC_20260210.md
 │
 ├── weights/                      # Model weights (gitignored)
 ├── data/                         # Datasets (gitignored)
 ├── archive/                      # Old versions (gitignored)
 │
 ├── .gitignore
-├── STRUCTURE.md                  # Detailed directory layout
+├── STRUCTURE.md
 ├── pytest.ini
 ├── requirements.txt
 └── README.md
 ```
-
-See [STRUCTURE.md](STRUCTURE.md) for detailed file descriptions.
-
----
-
-## Key Technical Details
-
-### Adaptive-K Re-detection
-The hybrid tracker uses Grounding DINO for text-guided detection with an adaptive re-detection interval (K). High object motion triggers frequent re-detection (K=2-3), while slow/stationary objects use longer intervals (K=10-15) to save compute. Between keyframes, YOLO/ByteTrack provides frame-to-frame tracking with linear interpolation.
-
-### Dual-Layer Depth
-- **Layer 1 (Metric)**: Depth Anything V2 provides absolute depth in meters (run every `depth_stride` frames, default 5)
-- **Layer 2 (Proxy)**: BBox-scale inverse proxy for fast-moving objects
-- **Blending**: Confidence-weighted fusion — low detection confidence increases proxy weight
-
-### RTS Smoothing
-Rauch-Tung-Striebel two-pass optimal smoother (forward Kalman + backward smoother). Applied to azimuth, elevation, and distance jointly. The `depth_render` value used for FOA encoding is the RTS-smoothed metric distance, ensuring stutter-free spatial audio.
-
-### FOA Encoding
-AmbiX format (ACN/SN3D): W = mono, Y = sin(az)·cos(el), Z = sin(el), X = cos(az)·cos(el). Distance-dependent gain (inverse-square law) and low-pass filtering simulate natural attenuation.
-
-### HRTF Binaural
-8-speaker virtual cube decode → nearest-neighbor HRIR lookup from SOFA file → per-channel convolution. Tested with MIT KEMAR (64,800 measurements, 48kHz, 384-tap FIR).
 
 ---
 
 ## Documentation
 
 - **[STRUCTURE.md](STRUCTURE.md)** — Detailed directory layout
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System architecture
-- **[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md)** — Full project documentation
-- **[docs/OSC_INTERFACE_SPEC.md](docs/OSC_INTERFACE_SPEC.md)** — OSC protocol specification
-- **[docs/FINAL_EVALUATION_REPORT.md](docs/FINAL_EVALUATION_REPORT.md)** — Evaluation results
+- **[docs/ARCHITECTURE_20260210.md](docs/ARCHITECTURE_20260210.md)** — System architecture
+- **[docs/PROJECT_DOCUMENTATION_20260210.md](docs/PROJECT_DOCUMENTATION_20260210.md)** — Full project documentation (Korean)
+- **[docs/PERCEPTUAL_EVALUATION_20260210.md](docs/PERCEPTUAL_EVALUATION_20260210.md)** — Listening test design
+- **[docs/FINAL_EVALUATION_REPORT_20260210.md](docs/FINAL_EVALUATION_REPORT_20260210.md)** — Comprehensive evaluation results
+- **[docs/OSC_INTERFACE_SPEC_20260210.md](docs/OSC_INTERFACE_SPEC_20260210.md)** — OSC protocol specification
 
 ---
 
@@ -277,7 +273,7 @@ AmbiX format (ACN/SN3D): W = mono, Y = sin(az)·cos(el), Z = sin(el), X = cos(az
 
 ```bibtex
 @misc{vid2spatial2026,
-  title={Vid2Spatial: Text-Guided Video Tracking for Spatial Audio Authoring},
+  title={Vid2Spatial: Vision-Guided Spatial Control Trajectory Extraction for Audio Authoring},
   author={Seungheon Doh},
   year={2026},
   howpublished={\url{https://github.com/paiiek/vid2spatial}}
@@ -292,4 +288,4 @@ MIT License
 
 ---
 
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-02-10

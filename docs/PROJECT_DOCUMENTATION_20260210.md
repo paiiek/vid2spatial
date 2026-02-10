@@ -1,6 +1,6 @@
 # Vid2Spatial: Video-to-Spatial Audio Pipeline
 
-**프로젝트 종합 문서 (2026-02-07 업데이트)**
+**프로젝트 종합 문서 (2026-02-10 업데이트)**
 
 > 이 문서는 졸업논문 프로포절 발표를 위해 작성되었습니다.
 > 공간 오디오에 대한 사전 지식이 없는 청중을 대상으로 합니다.
@@ -24,17 +24,24 @@
 
 ### 1.1 연구 목표
 
-**Vid2Spatial**은 일반 비디오에서 **공간 오디오(Spatial Audio)**를 자동으로 생성하는 시스템입니다.
+**Vid2Spatial**은 일반 비디오에서 **안정적인 공간 제어 궤적(Spatial Control Trajectory)**을 추출하여 공간 오디오 렌더링 및 저작(Authoring)에 활용하는 시스템입니다.
 
-**핵심 아이디어**: 비디오 속 물체의 움직임을 추적하고, 그 위치에 맞는 3D 사운드를 실시간으로 렌더링합니다.
+**핵심 아이디어**: 비디오 속 물체의 움직임으로부터 오디오 제어에 적합한 3D 궤적을 생성하고, 이를 FOA/바이노럴 렌더링 및 DAW 연동(OSC)으로 출력합니다.
 
 ```
 입력: 일반 비디오 + 텍스트 프롬프트 ("guitar", "drum" 등)
       ↓
 처리: 객체 추적 → 깊이 추정 → 3D 좌표 계산 → 공간 오디오 렌더링
       ↓
-출력: 4채널 First-Order Ambisonics (FOA) 오디오
+출력: 4채널 First-Order Ambisonics (FOA) 오디오 / 바이노럴 / OSC
 ```
+
+**주요 기여 (Contributions)**:
+1. **C1.** 결정론적(Deterministic) 비전→제어 파이프라인 — 비디오에서 공간 오디오 저작을 위한 안정적 제어 궤적 추출
+2. **C2.** Adaptive-K 추적 — 빠른 움직임에서 궤적 붕괴(collapse)를 방지
+3. **C3.** RTS 기반 궤적 평활화 — 움직임 진폭을 보존하면서 제어에 적합한 부드러운 궤적 생성
+4. **C4.** Confidence-weighted 깊이 혼합 — 안정적인 거리 제어 신호 생성 (jitter 60% 감소)
+5. **C5.** FOA/OSC 이중 출력 — 렌더링 및 DAW 저작 워크플로우 연결
 
 ### 1.2 활용 분야
 
@@ -51,6 +58,7 @@
 2. **깊이 모호성**: 2D 영상에서 3D 깊이를 추정하는 것은 본질적으로 불확실함
 3. **실시간 처리**: 오디오 렌더링은 지연이 느껴지지 않아야 함 (< 20ms)
 4. **부드러운 궤적**: 떨림이나 급격한 변화는 청각적으로 불쾌함
+5. **제어 신호 신뢰성 (Control-signal reliability)**: 추적 정확도뿐 아니라, 오디오 저작 도구의 제어 입력으로 활용할 수 있을 만큼 안정적이고 매끈한 궤적이어야 함
 
 ---
 
@@ -412,45 +420,40 @@ def encode_foa(
     return np.stack([W, Y, Z, X])
 ```
 
-### 4.5 바이노럴 렌더링 (FOA → Binaural)
+### 4.5 바이노럴 렌더링
 
-**위치**: `vid2spatial/foa_render.py` — `foa_to_binaural_sofa()`
+**위치**: `vid2spatial/foa_render.py`
 
-FOA 오디오를 헤드폰으로 청취 가능한 바이노럴 스테레오로 변환합니다.
-
-**두 가지 방식 지원**:
-
-| 방식 | 함수 | 설명 | 장점 | 단점 |
-|------|------|------|------|------|
-| **Simple Crossfeed** | `foa_to_binaural()` | ±30° 스테레오 디코딩 + 0.3ms ITD + 22% 크로스피드 | 빠름, 의존성 없음 | 주파수별 공간 cue 없음 |
-| **HRTF (SOFA)** | `foa_to_binaural_sofa()` | KEMAR HRTF 기반 8-speaker 가상 디코딩 + nearest-neighbor HRIR convolution | 자연스러운 공간감, pinna cue 반영 | SOFA 파일 필요 |
-
-**HRTF 바이노럴 파이프라인**:
+FOA와 바이노럴은 **독립된 렌더링 경로**로 분리 (2026-02-09):
 
 ```
-FOA [W,Y,Z,X]
-    ↓
-8개 가상 스피커 디코딩 (cube layout)
-    ↓  각 스피커 방향별 AmbiX decode weight 적용
-    ↓
-nearest-neighbor HRIR 매칭 (KEMAR 64,800 측정점)
-    ↓
-FFT convolution (각 스피커 × 좌/우 귀)
-    ↓
-합산 → 바이노럴 스테레오 [L, R]
+trajectory_3d.json
+       │
+       ├──▶ render_foa_from_trajectory()      → foa.wav (4ch AmbiX)
+       │
+       └──▶ render_binaural_from_trajectory() → proposed.wav (2ch binaural)
+             └── direct_binaural_sofa()         ← HRTF 직접 convolution
 ```
 
-**정량 비교 (45쌍, 15 시나리오 × 3 오디오 타입)**:
+**Direct HRTF 바이노럴** (FOA 경유 X, 직접 모노→바이노럴):
 
-| Metric | Crossfeed | HRTF | 의미 |
-|--------|-----------|------|------|
-| ILD (mean, dB) | 0.776 | 0.538 | HRTF가 더 자연스러운 수준 |
-| IC (Interaural Coherence) | 0.879 | 0.858 | HRTF가 더 넓은 공간감 |
-| **고주파 Spectral Diff** | **0.066** | **0.241** | **HRTF 3.6× 높음 (pinna 효과)** |
-| 전체 Spectral Diff | 0.065 | 0.217 | HRTF 3.3× 더 풍부한 L/R 차이 |
-| ITD (ms) | 0.091 | 0.105 | HRTF가 더 정확한 temporal cue |
+| 항목 | 값 |
+|------|-----|
+| 방식 | Overlap-Add + Hann window (50% overlap) |
+| 블록 크기 | 50ms (2,400 samples @ 48kHz) |
+| HRIR 선택 | nearest-neighbor, Cartesian dot-product |
+| HRTF | KEMAR SOFA — 64,800 측정점, 48kHz, 384-tap FIR |
 
-> **핵심**: HRTF의 가장 큰 장점은 **고주파 spectral difference (3.6×)** — 귓바퀴(pinna) 필터링 효과로 상하 방향 인지 및 externalization (머리 밖 음상) 에 결정적.
+기존 FOA→8-speaker→HRIR 방식은 고차 공간 정보가 1차 FOA에서 손실. 직접 HRIR 방식은 **전대역 공간 cue (ILD, ITD, pinna)** 를 보존.
+
+**좌표 변환 (CRITICAL)**:
+- Pipeline: `az = atan2(x, z)` → **RIGHT = az > 0**
+- AmbiX/SOFA: **LEFT = az > 0** (반시계 방향)
+- 해결: FOA 인코딩 및 HRTF lookup 전 `az_ambiX = -az_pipeline` 적용
+
+**d_rel 정규화 변경 (2026-02-09)**:
+- 이전: 고정 글로벌 범위 [0.5m, 10m]
+- 현재: **per-clip min/max** (각 비디오의 실제 거리 범위 기준)
 
 **SOFA 파일**: KEMAR dummy head HRTF — 64,800 측정점, 48kHz, 384-tap FIR
 
@@ -563,6 +566,9 @@ Vid2Spatial                    DAW / Game Engine
 
 ## 6. 평가 및 실험 결과
 
+> 평가 구조는 논문 기여(contribution)와 정렬되어 있습니다:
+> **(A) Trajectory reliability** → **(B) Control stability** → **(C) Depth stability** → **(D) Perceptual evaluation**
+
 ### 6.1 평가 프레임워크
 
 #### 6.1.1 평가 메트릭
@@ -585,7 +591,7 @@ Vid2Spatial                    DAW / Game Engine
 - 다양한 장르: 음악, 스포츠, 일상
 - 수동 라벨링된 GT 또는 상대 평가
 
-### 6.2 Tracking Ablation 결과
+### 6.2 (A) Trajectory Reliability — 추적 Ablation 결과
 
 #### 6.2.1 Tracker Backend 비교 (핵심 결과)
 
@@ -638,7 +644,7 @@ Linear (부드럽게): ───────────────────
 - Hold는 키프레임마다 "점프" 발생 → 청각적으로 불쾌한 "팝"
 - Linear 보간으로 MAE **6배 감소**, Jerk **15배 감소**
 
-#### 6.2.3 Smoothing 비교
+#### 6.2.3 (B) Control Stability — Smoothing 비교
 
 **테스트 조건**: Adaptive-K + Linear 보간 기반
 
@@ -669,9 +675,22 @@ RTS 적용:    ─────────────────  (매우 부�
 | + RTS Smoothing | 100% | 0.934 | **0.02** | **Jerk 제거** |
 | + Robustness | 100% | 0.932 | 0.02 | 이상치 제거 |
 
-### 6.3 Rendering 평가
+### 6.3 (C) Depth Stability — 깊이 안정화 평가
 
-#### 6.3.1 FOA 정확도
+Confidence-weighted depth blending (Depth Anything V2 metric + bbox-scale proxy)으로 거리 제어 신호의 안정성을 확보.
+
+| 지표 | Metric Only | Bbox Proxy Only | Blended (Proposed) | 개선 |
+|------|-------------|-----------------|--------------------|----|
+| **Depth Jitter** | 1.00x | 0.65x | **0.40x** | **60% 감소** |
+| **Temporal Consistency** | 낮음 | 중간 | **높음** | 안정적 d_rel |
+
+- Metric depth: 정밀하나 프레임간 jitter 큼 (작은 객체/빠른 움직임)
+- Bbox proxy: 부드럽지만 절대 스케일 정보 부족
+- Blended: 두 소스의 장점을 confidence 기반으로 결합 → 제어 신호로 활용 가능한 안정적 거리 궤적
+
+### 6.4 (D) Rendering 평가
+
+#### 6.4.1 FOA 정확도
 
 | 테스트 | 기대값 | 측정값 | 오차 |
 |--------|--------|--------|------|
@@ -679,7 +698,7 @@ RTS 적용:    ─────────────────  (매우 부�
 | 좌측 (90°, 0°) | X=0, Y=1, Z=0 | X=0.003, Y=0.998, Z=0.001 | < 0.5° |
 | 상단 (0°, 90°) | X=0, Y=0, Z=1 | X=0.002, Y=-0.001, Z=0.997 | < 0.5° |
 
-#### 6.3.2 실시간 성능
+#### 6.4.2 실시간 성능
 
 | 컴포넌트 | 처리 시간 | 실시간 여유 |
 |----------|----------|------------|
@@ -687,19 +706,27 @@ RTS 적용:    ─────────────────  (매우 부�
 | Trajectory Lookup | 0.1ms/frame | 충분 |
 | **총합** | **0.4ms/frame** | **@30fps: 33ms 중 1.2%** |
 
-### 6.4 End-to-End 시스템 평가
+### 6.5 End-to-End 시스템 평가
 
-#### 6.4.1 처리 속도
+#### 6.5.1 처리 속도
 
-| 단계 | 시간 (1분 영상 기준) |
-|------|---------------------|
-| Tracking (Adaptive-K) | ~68초 (1.13x 실시간) |
-| Depth Estimation | ~45초 (0.75x 실시간) |
-| Trajectory Stabilization | ~2초 |
-| FOA Rendering | ~3초 |
-| **총합** | **~120초 (2x 실시간)** |
+**실측 E2E 레이턴시** (10초 비디오, 300프레임 @ 30fps, RTX 3090):
 
-#### 6.4.2 메모리 사용량
+| 단계 | 느린 모션 | 빠른 모션 | 비중 |
+|------|-----------|-----------|------|
+| Tracker 초기화 | 4.2s | 4.2s | 1회성 |
+| **DINO tracking** | **11.5s** | **39.6s** | **~90%** |
+| RTS smoothing | 0.006s | 0.008s | <0.1% |
+| Binaural render (HRTF OLA) | 1.3s | 1.4s | ~3-10% |
+| OSC send | 0.009s | 0.015s | <0.1% |
+| **총합** | **13.3s** | **46.3s** | |
+| **실시간 대비** | **1.3x** | **4.6x** | |
+
+- 느린 모션 (motorcycle-17): adaptive K 평균=14.4, 18 keyframes
+- 빠른 모션 (dog-14): adaptive K 평균=2.2, 137 keyframes
+- **렌더링 자체(tracking 이후)는 ~1.5s** — 사실상 실시간
+
+#### 6.5.2 메모리 사용량
 
 | 컴포넌트 | GPU 메모리 |
 |----------|-----------|
@@ -743,8 +770,9 @@ RTS 적용:    ─────────────────  (매우 부�
    - Temporal consistency를 위한 video depth 모델
    - 장면 이해 기반 스케일 추정
 
-4. **청취 평가**:
-   - 주관적 청취 테스트 (MOS)
+4. **청취 평가** *(진행 중)*:
+   - 주관적 청취 테스트 (MOS) — 웹 기반 인터페이스 구현 완료, 25명 대상 실시 예정
+   - Proposed (HRTF binaural) vs Baseline (stereo pan) vs Mono (anchor)
    - VR 환경에서의 몰입감 평가
 
 5. **개인화된 HRTF**:
@@ -840,5 +868,5 @@ python -m vid2spatial.foa_render \
 
 ---
 
-*문서 작성일: 2026-02-06, 업데이트: 2026-02-07 (HRTF 바이노럴, 깊이 평활화, GT 평가)*
+*문서 작성일: 2026-02-06, 업데이트: 2026-02-10 (contribution 정렬, evaluation 구조 재편, depth stability 섹션 추가, control-signal reliability 도전과제 추가)*
 *Vid2Spatial Project - Graduate Thesis Proposal Documentation*

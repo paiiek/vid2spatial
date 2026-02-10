@@ -1,49 +1,53 @@
 # Vid2Spatial Project Structure
 
-Last updated: 2026-02-07
+Last updated: 2026-02-10
 
 ## Directory Layout
 
 ```
 vid2spatial/
 ├── vid2spatial_pkg/          # Core Python package
-│   ├── hybrid_tracker.py         # Adaptive-K hybrid tracker (DINO + SAM2)
-│   ├── trajectory_stabilizer.py  # RTS smoother + depth_render fix
-│   ├── foa_render.py             # FOA encoding + binaural (crossfeed / HRTF SOFA)
+│   ├── hybrid_tracker.py         # Adaptive-K hybrid tracker (DINO + YOLO/ByteTrack)
+│   ├── trajectory_stabilizer.py  # RTS smoother + depth stabilization
+│   ├── foa_render.py             # FOA AmbiX + HRTF binaural + stereo pan baseline
 │   ├── pipeline.py               # End-to-end pipeline orchestration
 │   ├── config.py                 # Configuration management
 │   ├── vision.py                 # Camera geometry (pixel_to_ray, ray_to_angles)
 │   ├── video_utils.py            # Video I/O utilities
-│   ├── depth_metric.py           # Depth estimation
-│   └── osc_sender.py             # OSC streaming for DAW
+│   ├── depth_metric.py           # Depth Anything V2 integration
+│   ├── depth_utils.py            # Depth blending utilities
+│   ├── osc_sender.py             # OSC streaming for DAW
+│   └── multi_source.py           # Multi-source FOA mixing
 │
 ├── experiments/              # Experiment scripts + results
 │   ├── e2e_20_videos/            # 20 diverse real videos, E2E pipeline
 │   ├── gt_eval_synthetic/        # 15 synthetic GT scenes, param accuracy
-│   ├── sot_15_videos/            # 15 SOT benchmark videos + 30 re-renders
-│   │   ├── render_A_instrument_hrtf/  # HRTF binaural (instrument audio)
-│   │   ├── render_B_foley_hrtf/       # HRTF binaural (foley audio)
-│   │   ├── render_orig_hrtf/          # HRTF binaural (original audio)
-│   │   └── hrtf_quality_analysis.json # HRTF vs crossfeed comparison
+│   ├── sot_15_videos/            # SOT benchmark + HRTF binaural renders
 │   └── synthetic_render.py       # 15 synthetic scenario renderer
 │
 ├── evaluation/               # Evaluation code + results
-│   ├── tracking_ablation/        # Tracker ablation study (SAM2 vs DINO vs Hybrid)
-│   ├── ablation_output/          # Renderer/baseline ablation results
-│   ├── comprehensive_results/    # Final comprehensive evaluation
-│   ├── tests/                    # Unit tests (tracker, OSC, robustness)
+│   ├── tracking_ablation/        # (A) Trajectory reliability ablation
+│   ├── ablation_output/          # Renderer/baseline ablation
+│   ├── comprehensive_results/    # (B-C) Control + depth stability results
+│   ├── listening_test/           # (D) Web-based perceptual evaluation
+│   │   ├── index.html                # Listening test interface
+│   │   ├── server.py                 # HTTP server + response saving
+│   │   ├── prepare_stimuli.py        # Stimuli rendering script
+│   │   ├── analyze_responses.py      # Response analysis
+│   │   └── stimuli/config.json       # Test configuration
+│   ├── tests/                    # Unit tests
 │   ├── plots/                    # Evaluation plots (PNG)
-│   ├── baseline_ablation.py
-│   ├── foa_distance_validation.py
-│   └── FOA_DISTANCE_REPORT.md
+│   ├── ISMAR_LISTENING_TEST_PLAN.md  # Listening test methodology
+│   └── FOA_DISTANCE_REPORT.md       # Distance rendering validation
 │
-├── docs/                     # Documentation
-│   ├── PROJECT_DOCUMENTATION.md  # Full project documentation (thesis)
-│   ├── ARCHITECTURE.md           # System architecture
-│   ├── OSC_INTERFACE_SPEC.md     # OSC protocol spec
-│   └── FINAL_EVALUATION_REPORT.md
+├── docs/                     # Documentation (dated versions)
+│   ├── PROJECT_DOCUMENTATION_20260210.md  # Full project documentation (Korean)
+│   ├── ARCHITECTURE_20260210.md           # System architecture
+│   ├── PERCEPTUAL_EVALUATION_20260210.md  # Listening test design
+│   ├── FINAL_EVALUATION_REPORT_20260210.md # Comprehensive evaluation
+│   └── OSC_INTERFACE_SPEC_20260210.md     # OSC protocol spec
 │
-├── archive/                  # Old versions (gitignored, 4.3GB)
+├── archive/                  # Old versions (gitignored)
 ├── data/                     # Datasets (gitignored)
 ├── weights/                  # Model weights (gitignored)
 │
@@ -58,15 +62,13 @@ vid2spatial/
 
 ### Core Implementation
 - `vid2spatial_pkg/hybrid_tracker.py` — Adaptive K-frame detection + robustness layer
-- `vid2spatial_pkg/trajectory_stabilizer.py` — RTS smoother, depth_render smoothing
-- `vid2spatial_pkg/foa_render.py` — FOA AmbiX encoding + HRTF binaural via KEMAR SOFA
+- `vid2spatial_pkg/trajectory_stabilizer.py` — RTS smoother, depth stabilization
+- `vid2spatial_pkg/foa_render.py` — FOA AmbiX encoding + HRTF binaural (KEMAR SOFA) + stereo pan baseline
 - `vid2spatial_pkg/pipeline.py` — Full pipeline orchestration
+- `vid2spatial_pkg/depth_metric.py` — Depth Anything V2, confidence-weighted blending
 
-### Experiments
-- `experiments/sot_15_videos/` — 45 HRTF binaural files (15 orig + 15 instrument + 15 foley)
-- `experiments/gt_eval_synthetic/` — Parameter accuracy (Az MAE 0.68°, El MAE 0.18°)
-- `experiments/e2e_20_videos/` — 19/20 diverse real videos end-to-end
-
-### Evaluation
-- `evaluation/tracking_ablation/` — SAM2 3.4% → Adaptive-K 100% amplitude
-- `evaluation/ablation_output/` — Renderer/baseline comparisons
+### Evaluation (aligned with contributions)
+- `evaluation/tracking_ablation/` — (A) Trajectory reliability: SAM2 3.4% → Adaptive-K 100% amplitude
+- `evaluation/comprehensive_results/` — (B) Control stability: RTS 93-97% jerk reduction
+- `evaluation/comprehensive_results/` — (C) Depth stability: 60% jitter reduction
+- `evaluation/listening_test/` — (D) Perceptual evaluation: HRTF binaural vs stereo pan vs mono

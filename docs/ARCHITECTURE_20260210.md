@@ -1,7 +1,7 @@
 # Vid2Spatial: Technical Architecture Document
 
-**Version**: 1.0
-**Date**: 2026-02-05
+**Version**: 1.2
+**Date**: 2026-02-10
 **Author**: Seungheon Doh
 
 ---
@@ -17,7 +17,7 @@
    - 3.4 [Depth Estimation](#34-depth-estimation)
    - 3.5 [3D Projection](#35-3d-projection)
    - 3.6 [RTS Smoother](#36-rts-smoother)
-   - 3.7 [FOA Renderer](#37-foa-renderer)
+   - 3.7 [Audio Rendering](#37-audio-rendering)
    - 3.8 [OSC Sender](#38-osc-sender)
 4. [Data Flow](#4-data-flow)
 5. [Performance Analysis](#5-performance-analysis)
@@ -31,19 +31,21 @@
 
 ### 1.1 Problem Statement
 
-Spatial audio authoring for video content requires accurate 3D trajectory information of sound sources. Traditional approaches face several challenges:
+Spatial audio authoring for video content requires **stable spatial control trajectories** derived from visual motion. Traditional approaches face several challenges:
 
 1. **Motion Collapse**: State-of-the-art video object segmentation models (e.g., SAM2) experience severe tracking failures at motion frequencies above 0.5Hz
 2. **Depth Ambiguity**: Monocular depth estimation is unreliable for fast-moving small objects
 3. **Temporal Jitter**: Raw tracking outputs contain high-frequency noise unsuitable for perceptual audio
+4. **Control-signal Reliability**: Tracking accuracy alone is insufficient — trajectories must be smooth and stable enough to serve as audio authoring control inputs
 
 ### 1.2 Proposed Solution
 
-Vid2Spatial addresses these challenges through:
+Vid2Spatial addresses these challenges through a deterministic vision-guided control pipeline:
 
-1. **DINO Adaptive-K Re-detection**: Text-guided detection with adaptive keyframe intervals
-2. **Dual-Layer Depth**: Metric depth + bbox-scale proxy fusion
-3. **RTS Smoothing**: Optimal offline trajectory smoothing
+1. **DINO Adaptive-K Re-detection**: Text-guided detection with adaptive keyframe intervals that prevents trajectory collapse
+2. **Confidence-Weighted Depth Blending**: Metric depth + bbox-scale proxy fusion for stable distance control
+3. **RTS Smoothing**: Optimal offline trajectory smoothing preserving motion amplitude
+4. **FOA/OSC Dual Output**: Integration with authoring workflows via Ambisonics rendering and DAW automation
 
 ### 1.3 Target Applications
 
@@ -359,9 +361,11 @@ def robustness_filter(detections):
 
 ---
 
-### 3.4 Depth Estimation
+### 3.4 Depth Estimation (Distance Control Stability Module)
 
 **File**: `vid2spatial_pkg/depth_metric.py`, `vid2spatial_pkg/depth_utils.py`
+
+> Depth 모듈은 파이프라인의 **거리 제어 안정화(distance control stability)** 핵심 컴포넌트입니다. Metric depth와 bbox-scale proxy를 confidence-weighted blending하여, 프레임간 jitter를 60% 감소시키고 오디오 저작에 적합한 안정적 거리 궤적을 생성합니다.
 
 #### 3.4.1 Metric Depth (Layer 1)
 
@@ -718,68 +722,73 @@ def rts_smooth_1d(observations):
 
 ---
 
-### 3.7 FOA Renderer
+### 3.7 Audio Rendering
 
 **File**: `vid2spatial_pkg/foa_render.py`
 
-**First-Order Ambisonics (FOA) Encoding**:
+Vid2Spatial provides **two independent rendering paths**, both driven by the same trajectory:
 
-FOA uses 4 channels in AmbiX format (ACN ordering, SN3D normalization):
+```
+trajectory_3d.json
+       │
+       ├──▶ FOA Renderer ──▶ foa.wav (4ch AmbiX, for Ambisonics playback)
+       │
+       └──▶ HRTF Binaural ──▶ proposed.wav (2ch, for headphone listening)
+```
+
+#### 3.7.1 Coordinate Convention (CRITICAL)
+
+The pipeline and spatial audio standards use **opposite azimuth conventions**:
+
+| Convention | Right of center | Left of center |
+|-----------|-----------------|----------------|
+| Pipeline (`atan2(x, z)`) | az > 0 | az < 0 |
+| AmbiX / SOFA standard | az < 0 | az > 0 |
+
+**Solution**: Negate azimuth before FOA encoding or HRTF lookup:
+```python
+az_ambiX = -az_pipeline
+```
+
+#### 3.7.2 FOA Encoding (AmbiX ACN/SN3D)
 
 | Channel | Name | Encoding |
 |---------|------|----------|
-| W | Omnidirectional | `mono` |
-| Y | Left-Right | `mono × sin(az)` |
-| Z | Up-Down | `mono × sin(el)` |
-| X | Front-Back | `mono × cos(az) × cos(el)` |
+| W | Omnidirectional | `mono × gain` |
+| Y | Left-Right | `mono × gain × sin(az)` |
+| Z | Up-Down | `mono × gain × sin(el)` |
+| X | Front-Back | `mono × gain × cos(az) × cos(el)` |
+
+#### 3.7.3 HRTF Binaural Rendering (Overlap-Add)
+
+Direct HRIR convolution from KEMAR SOFA (64,800 measurements) for full-bandwidth spatial cues (ILD, ITD, pinna filtering). Uses **overlap-add with Hann window** for artifact-free HRIR transitions:
+
+- **Block size**: 50ms (2,400 samples at 48kHz), hop = 50% (1,200 samples)
+- **Window**: Hann → 50% overlap guarantees perfect reconstruction
+- **HRIR lookup**: nearest-neighbor via Cartesian dot-product per block
+
+Each block: convolve extended input `[start - hrir_len + 1, end)` with block's HRIR, window with Hann, accumulate via overlap-add. Adjacent blocks with different HRIRs blend smoothly through the overlapping Hann windows.
+
+#### 3.7.4 Shared Processing Chain
+
+Both FOA and binaural paths share identical post-processing:
+- **Distance gain + LPF**: `apply_distance_gain_lpf(d_rel_s)` — d_rel-driven attenuation and low-pass
+- **Reverb**: `schroeder_ir(sr, rt60=0.4)` — Schroeder reverberator
+- **d_rel normalization**: Per-clip min/max (not global [0.5m, 10m])
 
 ```python
-def render_foa_from_trajectory(audio_path, trajectory, output_path):
-    """
-    Render mono audio to FOA using trajectory.
-    """
-    # Load mono audio
-    audio, sr = sf.read(audio_path)
-    if audio.ndim > 1:
-        audio = audio.mean(axis=1)
-
-    # Interpolate trajectory to audio sample rate
-    frames = trajectory["frames"]
-    traj_az = np.array([f["az"] for f in frames])
-    traj_el = np.array([f["el"] for f in frames])
-    traj_dist = np.array([f["dist_m"] for f in frames])
-
-    # Resample to audio length
-    az = np.interp(
-        np.linspace(0, len(frames)-1, len(audio)),
-        np.arange(len(frames)),
-        traj_az
-    )
-    el = np.interp(
-        np.linspace(0, len(frames)-1, len(audio)),
-        np.arange(len(frames)),
-        traj_el
-    )
-    dist = np.interp(
-        np.linspace(0, len(frames)-1, len(audio)),
-        np.arange(len(frames)),
-        traj_dist
-    )
-
-    # Distance attenuation (1/r law)
-    gain = 1.0 / np.maximum(dist, 0.1)
-    gain = gain / gain.max()  # Normalize
-
-    # Encode to AmbiX
-    W = audio * gain
-    Y = audio * gain * np.sin(az)
-    Z = audio * gain * np.sin(el)
-    X = audio * gain * np.cos(az) * np.cos(el)
-
-    # Stack and write
-    foa = np.stack([W, Y, Z, X], axis=1)
-    sf.write(output_path, foa, sr)
+# d_rel: per-clip normalization
+d_min, d_max = dist.min(), dist.max()
+d_range = d_max - d_min
+d_rel = 0.5 if d_range < 0.1 else clip((dist - d_min) / d_range, 0, 1)
 ```
+
+#### 3.7.5 Baseline Condition (Stereo Pan)
+
+For listening test comparison:
+- **Stereo pan**: `pan = sin(az)` (constant-power pan law)
+- Same distance gain/LPF and reverb as proposed
+- **Only difference** between proposed and baseline: HRTF binaural vs. stereo pan
 
 ---
 
@@ -873,17 +882,24 @@ trajectory = {
 
 ### 4.2 Processing Pipeline Timing
 
-For 150 frames (5 seconds at 30fps):
+**Measured E2E latency** (10s video, 300 frames @ 30fps, NVIDIA RTX 3090):
 
-| Stage | Time | Notes |
-|-------|------|-------|
-| DINO Detection | 3-5s | ~20 keyframes |
-| Adaptive-K Interpolation | <0.1s | Linear |
-| Depth Estimation (stride=5) | 2-4s | 30 estimates |
-| 3D Projection | <0.1s | Pure math |
-| RTS Smoothing | <0.1s | O(n) |
-| FOA Rendering | 0.1-0.5s | Depends on audio length |
-| **Total** | **5-10s** | ~15-30 FPS |
+| Stage | Slow Motion | Fast Motion | Note |
+|-------|-------------|-------------|------|
+| Tracker init | 4.2s | 4.2s | One-time model load (DINO+SAM2+DepthAnything) |
+| **DINO tracking** | **11.5s** | **39.6s** | Bottleneck (~90% of total) |
+| RTS smoothing | 0.006s | 0.008s | Negligible |
+| **Binaural render** | **1.3s** | **1.4s** | HRTF OLA convolution (10s audio) |
+| Baseline render | 0.4s | 0.4s | Stereo pan + reverb |
+| OSC send | 0.009s | 0.015s | 300 UDP packets |
+| **Total** | **13.3s** | **46.3s** | |
+| **Realtime ratio** | **1.3x** | **4.6x** | |
+
+Tracking time varies with motion speed (adaptive K):
+- Slow motion (motorcycle-17): avg K=14.4, 18 keyframes → 11.5s
+- Fast motion (dog-14): avg K=2.2, 137 keyframes → 39.6s
+
+Post-tracking rendering is ~1.5s regardless of content — essentially real-time.
 
 ---
 

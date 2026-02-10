@@ -5,10 +5,13 @@ Simple HTTP server for the Vid2Spatial perceptual evaluation.
 Serves static files (HTML, audio, video) and handles response saving.
 
 Usage:
-    cd evaluation/listening_test
+    cd vid2spatial/evaluation/listening_test
     python server.py [--port 8080]
 
 Then open http://localhost:8080 in a browser.
+
+The server root is set to the vid2spatial project root so that
+data/lasot/... paths resolve correctly.
 """
 import os
 import sys
@@ -19,11 +22,27 @@ from pathlib import Path
 from datetime import datetime
 
 
-RESPONSES_DIR = Path(__file__).parent / "responses"
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent  # vid2spatial/
+RESPONSES_DIR = SCRIPT_DIR / "responses"
 
 
 class EvalHandler(SimpleHTTPRequestHandler):
     """HTTP handler with response saving API."""
+
+    def do_GET(self):
+        # Redirect / to the listening test page
+        if self.path == '/' or self.path == '':
+            self.send_response(302)
+            self.send_header('Location', '/evaluation/listening_test/index.html')
+            self.end_headers()
+            return
+        # Redirect /api/save GET to 404
+        if self.path.startswith('/api/'):
+            self.send_response(404)
+            self.end_headers()
+            return
+        super().do_GET()
 
     def do_POST(self):
         if self.path == '/api/save':
@@ -47,12 +66,26 @@ class EvalHandler(SimpleHTTPRequestHandler):
 
     def _save_response(self, data):
         RESPONSES_DIR.mkdir(exist_ok=True)
-        pid = data.get('participant_id', 'unknown')
+        # Extract participant name from demographic data
+        participant = data.get('participant', {})
+        name = participant.get('name', '') if isinstance(participant, dict) else ''
+        if not name:
+            name = data.get('participant_id', 'unknown')
+        # Sanitize name for filename (remove spaces, keep Korean/alphanumeric)
+        safe_name = ''.join(c for c in name if c.isalnum() or c in '-_')
+        if not safe_name:
+            safe_name = 'unknown'
         ts = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"{pid}_{ts}.json"
+        filename = f"{safe_name}_{ts}.json"
         path = RESPONSES_DIR / filename
+        # Avoid overwriting if same name+second
+        counter = 1
+        while path.exists():
+            filename = f"{safe_name}_{ts}_{counter}.json"
+            path = RESPONSES_DIR / filename
+            counter += 1
         with open(path, 'w') as f:
-            json.dump(data, f, indent=2)
+            json.dump(data, f, indent=2, ensure_ascii=False)
         print(f"[saved] {path}")
 
     def end_headers(self):
@@ -78,8 +111,9 @@ def main():
     parser.add_argument('--host', default='0.0.0.0')
     args = parser.parse_args()
 
-    # Change to the listening_test directory
-    os.chdir(Path(__file__).parent)
+    # Serve from project root so data/lasot/... paths work
+    os.chdir(PROJECT_ROOT)
+    print(f"  Serving from: {PROJECT_ROOT}")
 
     server = HTTPServer((args.host, args.port), EvalHandler)
     print(f"\n  Vid2Spatial Perceptual Evaluation Server")

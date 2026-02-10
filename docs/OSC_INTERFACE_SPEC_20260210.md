@@ -112,18 +112,32 @@ Video → Object Tracking → Depth Estimation → Trajectory → Normalization 
 | Default FPS | 30 |
 | OSC Rate | video FPS (30 Hz typical) |
 | Timecode | seconds since video start |
-| Latency | ~1 frame (33ms at 30fps) |
+| OSC send latency | ~0.05ms/frame (UDP, non-blocking) |
+| E2E pipeline latency | 1.3-4.6x realtime (offline, see below) |
 
 **Timecode formula:**
 ```
 timecode_sec = frame_index / fps
 ```
 
+**E2E Pipeline Latency** (10s video, 300 frames, RTX 3090):
+
+| Stage | Time | Note |
+|-------|------|------|
+| DINO tracking | 11.5-39.6s | ~90% of total; varies with motion speed |
+| RTS smoothing | <0.01s | Negligible |
+| Audio render | ~1.5s | HRTF binaural or stereo pan |
+| OSC send | ~0.015s | 300 UDP packets, non-realtime burst |
+| **Total** | **13-46s** | **1.3-4.6x realtime** |
+
+Note: OSC streaming is offline (pre-computed trajectory). For real-time preview,
+use EMA smoothing instead of RTS and stream as frames are tracked.
+
 ## Design Rationale
 
 ### Why d_rel instead of raw distance?
 
-1. **Consistent mapping:** Raw distance varies by video (1-3m vs 5-10m). d_rel always uses global range [0.5m, 10m].
+1. **Consistent mapping:** Raw distance varies by video (1-3m vs 5-10m). d_rel uses **per-clip min/max normalization** (extracted from the trajectory's own distance range) to always span [0, 1].
 
 2. **Perceptual alignment:** Human distance perception is roughly logarithmic. Using normalized range allows DAW to apply its own perceptual curves.
 
@@ -173,6 +187,7 @@ When extracting distance from trajectory:
 ### d_rel Computation (depth_utils.py)
 
 ```python
-d_rel = clamp((dist_m - d_rel_min) / (d_rel_max - d_rel_min), 0, 1)
-# Default: d_rel_min=0.5m, d_rel_max=10.0m
+d_rel = clamp((dist_m - d_min) / (d_max - d_min), 0, 1)
+# d_min, d_max: extracted per-clip from trajectory distance range
+# If range < 0.1m, d_rel = 0.5 (constant)
 ```

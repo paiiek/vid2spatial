@@ -56,6 +56,9 @@ data/
 # Archive (old versions, not needed in repo)
 archive/
 
+# Listening test responses (participant data)
+evaluation/listening_test/responses/
+
 # WandB
 wandb/
 

@@ -78,8 +78,17 @@ def interpolate_angles_distance(frames: List[Dict], T: int, sr: int) -> Tuple[np
     if any("d_rel" in f for f in frames):
         d_rel = np.array([float(f.get("d_rel", 0.5)) for f in frames], dtype=np.float32)
     else:
-        # Compute d_rel from dist with global range [0.5m, 10m]
-        d_rel = np.clip((dist - 0.5) / (10.0 - 0.5), 0.0, 1.0)
+        # Compute d_rel from dist using per-clip min/max normalization
+        # (global fixed range like [0.5m, 10m] compresses d_rel to near-zero
+        #  when the object stays at similar distance throughout the clip)
+        d_min = float(np.min(dist))
+        d_max = float(np.max(dist))
+        d_range = d_max - d_min
+        if d_range < 0.1:
+            # Essentially constant distance → use midpoint d_rel
+            d_rel = np.full_like(dist, 0.5)
+        else:
+            d_rel = np.clip((dist - d_min) / d_range, 0.0, 1.0)
 
     s = np.linspace(idx[0], idx[-1], T, dtype=np.float32)
     dist_s = np.interp(s, idx, dist).astype(np.float32)
@@ -133,42 +142,43 @@ def apply_distance_gain_lpf(x: np.ndarray, sr: int, dist_s: np.ndarray,
                             d_rel_s: np.ndarray = None,
                             *, gain_k: float = 1.0,
                             lpf_min_hz: float = 800.0,
-                            lpf_max_hz: float = 8000.0) -> np.ndarray:
+                            lpf_max_hz: float = 8000.0,
+                            gain_min: float = 0.3,
+                            gain_max: float = 1.0) -> np.ndarray:
     """Apply distance-based gain and 1st-order low-pass filter to mono signal.
 
-    Uses d_rel (normalized 0-1) for consistent perceptual mapping across tracks.
-    - gain: 1/d law with floor, using dist_s (meters)
-    - LPF cutoff: log-scaled from d_rel (0=near=high cutoff, 1=far=low cutoff)
+    All mappings use d_rel (normalized 0-1) for consistent perceptual results
+    regardless of whether distance comes from metric depth or bbox proxy.
+    - gain: linear from d_rel (0=near=loud, 1=far=quiet)
+    - LPF cutoff: log-scaled from d_rel (0=near=bright, 1=far=muffled)
 
     Args:
         x: mono audio signal
         sr: sample rate
-        dist_s: distance in meters (for gain calculation)
-        d_rel_s: normalized distance 0-1 (for LPF). If None, computed from dist_s.
-        gain_k: gain exponent (1.0 = 1/r law)
+        dist_s: distance in meters (used as fallback to compute d_rel)
+        d_rel_s: normalized distance 0-1. If None, computed from dist_s.
+        gain_k: gain curve exponent (1.0 = linear, >1 = more aggressive)
         lpf_min_hz: LPF cutoff for far objects
         lpf_max_hz: LPF cutoff for near objects
+        gain_min: minimum gain at d_rel=1 (far)
+        gain_max: maximum gain at d_rel=0 (near)
     """
     T = x.shape[0]
     d = dist_s[:T].astype(np.float32)
 
-    # Gain mapping: 1/r law with floor
-    g = 1.0 / np.maximum(d, 1.0)
-    if float(gain_k) != 1.0:
-        g = g ** float(gain_k)
-    g = np.clip(g, 0.2, 1.0)
+    # Compute d_rel if not provided
+    if d_rel_s is not None:
+        nd = np.clip(d_rel_s[:T].astype(np.float32), 0.0, 1.0)
+    else:
+        nd = np.clip((d - 0.5) / (10.0 - 0.5), 0.0, 1.0)
+
+    # Gain from d_rel: near (0) → gain_max, far (1) → gain_min
+    g = gain_max - (gain_max - gain_min) * (nd ** float(gain_k))
     y = (x.astype(np.float32) * g).astype(np.float32)
 
     # LPF: use d_rel for consistent mapping across tracks
     lp_min = max(50.0, float(lpf_min_hz))
     lp_max = max(lp_min + 10.0, float(lpf_max_hz))
-
-    if d_rel_s is not None:
-        # Use pre-computed d_rel (global normalization)
-        nd = np.clip(d_rel_s[:T].astype(np.float32), 0.0, 1.0)
-    else:
-        # Fallback: compute from dist with global range [0.5m, 10m]
-        nd = np.clip((d - 0.5) / (10.0 - 0.5), 0.0, 1.0)
 
     # Log-scale cutoff: near (nd=0) → lp_max, far (nd=1) → lp_min
     log_min = math.log(lp_min)
@@ -304,6 +314,23 @@ def encode_many_to_foa(monolist: List[np.ndarray], az_list: List[np.ndarray], el
     return acc.astype(np.float32)
 
 
+def _load_and_prepare(audio_path: str, trajectory: Dict, smooth_ms: float = 50.0,
+                      dist_gain_k: float = 1.0, lpf_min: float = 800.0, lpf_max: float = 8000.0):
+    """Shared prep for FOA and binaural renderers: load audio, interpolate trajectory, apply distance FX."""
+    audio, sr = sf.read(audio_path, dtype='float32')
+    if audio.ndim == 2:
+        audio = audio.mean(axis=1)
+    T = audio.shape[0]
+    frames = trajectory.get("frames", [])
+    if not frames:
+        raise ValueError("Empty trajectory frames")
+    az_s, el_s, dist_s, d_rel_s = interpolate_angles_distance(frames, T, sr)
+    az_s, el_s = smooth_limit_angles(az_s, el_s, sr, smooth_ms=smooth_ms)
+    audio_proc = apply_distance_gain_lpf(audio, sr, dist_s, d_rel_s,
+                                         gain_k=dist_gain_k, lpf_min_hz=lpf_min, lpf_max_hz=lpf_max)
+    return audio_proc, sr, az_s, el_s, dist_s, d_rel_s, frames
+
+
 def render_foa_from_trajectory(
     audio_path: str,
     trajectory: Dict,
@@ -315,89 +342,93 @@ def render_foa_from_trajectory(
     dist_lpf_max_hz: float = 8000.0,
     apply_reverb: bool = False,
     rt60: float = 0.5,
-    output_stereo: bool = True,
-    sofa_path: str = None,
 ) -> Dict:
+    """Render mono audio to FOA (4-channel AmbiX) using trajectory.
+
+    This produces the FOA output only.  For binaural headphone output,
+    use render_binaural_from_trajectory() instead.
     """
-    Render mono audio to FOA using trajectory from tracking.
+    audio_proc, sr, az_s, el_s, dist_s, d_rel_s, frames = _load_and_prepare(
+        audio_path, trajectory, smooth_ms, dist_gain_k, dist_lpf_min_hz, dist_lpf_max_hz)
+    T = audio_proc.shape[0]
 
-    Args:
-        audio_path: Path to mono or stereo audio file (will be mixed to mono)
-        trajectory: Dict with 'frames' list containing {frame, az, el, dist_m} per frame
-        output_path: Output FOA wav path (4-channel)
-        smooth_ms: Smoothing window for angle interpolation
-        dist_gain_k: Distance gain exponent
-        dist_lpf_min_hz: Min LPF cutoff for far objects
-        dist_lpf_max_hz: Max LPF cutoff for near objects
-        apply_reverb: Whether to apply distance-based reverb
-        rt60: Reverb time if apply_reverb=True
-        output_stereo: Also output stereo/binaural version
-
-    Returns:
-        Dict with output file paths and metadata
-    """
-    import os
-
-    # Load audio
-    audio, sr = sf.read(audio_path, dtype='float32')
-    if audio.ndim == 2:
-        # Mix to mono
-        audio = audio.mean(axis=1)
-    T = audio.shape[0]
-
-    # Get trajectory frames
-    frames = trajectory.get("frames", [])
-    if not frames:
-        raise ValueError("Empty trajectory frames")
-
-    # Interpolate angles, distance, and d_rel to audio sample rate
-    az_s, el_s, dist_s, d_rel_s = interpolate_angles_distance(frames, T, sr)
-
-    # Apply smoothing
-    az_s, el_s = smooth_limit_angles(az_s, el_s, sr, smooth_ms=smooth_ms)
-
-    # Apply distance-based gain and LPF (using d_rel for consistent perceptual mapping)
-    audio_proc = apply_distance_gain_lpf(
-        audio, sr, dist_s, d_rel_s,
-        gain_k=dist_gain_k,
-        lpf_min_hz=dist_lpf_min_hz,
-        lpf_max_hz=dist_lpf_max_hz,
-    )
+    # Convert pipeline azimuth to AmbiX convention (negate)
+    az_ambiX = -az_s
 
     # Encode to FOA
-    foa = encode_mono_to_foa(audio_proc, az_s, el_s)
+    foa = encode_mono_to_foa(audio_proc, az_ambiX, el_s)
 
-    # Apply reverb if requested (using d_rel for consistent reverb mapping)
+    # Apply reverb if requested
     if apply_reverb:
         wet_curve = build_wet_curve_from_dist_occ(d_rel_s)
         foa = apply_timevarying_reverb_foa(foa, sr, wet_curve, rt60=rt60)
 
-    # Write FOA
     write_foa_wav(output_path, foa, sr)
 
-    result = {
+    return {
         "foa_path": output_path,
         "sample_rate": sr,
         "duration_sec": T / sr,
         "num_frames": len(frames),
     }
 
-    # Output stereo/binaural version
-    if output_stereo:
-        stereo_path = output_path.replace(".wav", "_stereo.wav").replace(".foa", "")
-        if stereo_path == output_path:
-            stereo_path = output_path.replace(".wav", "_stereo.wav")
 
-        if sofa_path and os.path.exists(sofa_path):
-            stereo = foa_to_binaural_sofa(foa, sr, sofa_path)
-            result["binaural_method"] = "hrtf_sofa"
-        else:
-            stereo = foa_to_binaural(foa, sr)
-            result["binaural_method"] = "crossfeed"
-        sf.write(stereo_path, stereo.T, sr, subtype="FLOAT")
-        result["stereo_path"] = stereo_path
+def render_binaural_from_trajectory(
+    audio_path: str,
+    trajectory: Dict,
+    output_path: str,
+    sofa_path: str,
+    *,
+    smooth_ms: float = 50.0,
+    dist_gain_k: float = 1.0,
+    dist_lpf_min_hz: float = 800.0,
+    dist_lpf_max_hz: float = 8000.0,
+    apply_reverb: bool = False,
+    rt60: float = 0.5,
+    block_ms: float = 50.0,
+) -> Dict:
+    """Render mono audio to HRTF binaural stereo using trajectory.
 
-    return result
+    Uses direct HRIR convolution (per-block nearest-neighbor lookup from SOFA)
+    for full-bandwidth spatial cues (ILD, ITD, pinna).
+    Independent from the FOA path.
+    """
+    import os
+    audio_proc, sr, az_s, el_s, dist_s, d_rel_s, frames = _load_and_prepare(
+        audio_path, trajectory, smooth_ms, dist_gain_k, dist_lpf_min_hz, dist_lpf_max_hz)
+    T = audio_proc.shape[0]
+
+    # Convert pipeline azimuth to AmbiX/SOFA convention (negate)
+    az_sofa = -az_s
+
+    # Direct HRTF binaural render (before reverb, so spatial cues are crisp)
+    stereo = direct_binaural_sofa(audio_proc, sr, az_sofa, el_s, sofa_path, block_ms=block_ms)
+
+    # Apply reverb to stereo AFTER HRTF (reverb is diffuse, shouldn't mask spatial cues)
+    if apply_reverb:
+        wet_curve = build_wet_curve_from_dist_occ(d_rel_s)
+        from .irgen import schroeder_ir, fft_convolve
+        ir = schroeder_ir(sr, rt60=rt60).astype(np.float32)
+        wet = wet_curve[:T].astype(np.float32)
+        for ch in range(2):
+            dry = stereo[ch, :T].astype(np.float32)
+            rev = fft_convolve(dry, ir)[:T]
+            stereo[ch, :T] = (1.0 - wet) * dry + wet * rev
+
+    # Peak normalize
+    peak = float(np.max(np.abs(stereo)) + 1e-9)
+    if peak > 1.0:
+        stereo = stereo / (peak * 1.01)
+
+    sf.write(output_path, stereo.T, sr, subtype="FLOAT")
+
+    return {
+        "binaural_path": output_path,
+        "binaural_method": "hrtf_direct",
+        "sample_rate": sr,
+        "duration_sec": T / sr,
+        "num_frames": len(frames),
+    }
 
 
 def foa_to_stereo(foa_sn3d: np.ndarray, sr: int, az_deg_L: float = +30.0, az_deg_R: float = -30.0) -> np.ndarray:
@@ -451,6 +482,116 @@ def foa_to_binaural(foa_sn3d: np.ndarray, sr: int) -> np.ndarray:
         Lo /= (peak * 1.01)
         Ro /= (peak * 1.01)
     return np.stack([Lo.astype(np.float32), Ro.astype(np.float32)], 0)
+
+
+def direct_binaural_sofa(mono: np.ndarray, sr: int, az_s: np.ndarray,
+                         el_s: np.ndarray, sofa_path: str,
+                         block_ms: float = 50.0) -> np.ndarray:
+    """Render mono to binaural using direct HRTF lookup per time block.
+
+    Instead of FOA virtual-speaker decode (which washes out high-frequency
+    spatial cues), this directly convolves mono with the nearest HRIR for
+    the source direction, updated every block_ms milliseconds.
+
+    Args:
+        mono: Mono audio [T]
+        sr: Sample rate
+        az_s: Azimuth per sample (AmbiX convention: +az = left)
+        el_s: Elevation per sample
+        sofa_path: Path to SOFA HRTF file
+        block_ms: HRTF update interval in ms (trades smoothness vs compute)
+
+    Returns:
+        Binaural [2, T] float32
+    """
+    import h5py
+    from scipy.signal import fftconvolve, resample_poly
+
+    T = mono.shape[0]
+
+    with h5py.File(sofa_path, 'r') as sofa:
+        ir_data = sofa['Data.IR'][:]          # (M, 2, N)
+        fs_hrir = float(sofa['Data.SamplingRate'][0])
+        src_pos = sofa['SourcePosition'][:]   # (M, 3)
+
+    src_az = np.radians(src_pos[:, 0])
+    src_el = np.radians(src_pos[:, 1])
+    src_cart = np.stack([
+        np.cos(src_el) * np.cos(src_az),
+        np.cos(src_el) * np.sin(src_az),
+        np.sin(src_el),
+    ], axis=1)  # (M, 3)
+
+    # Resample HRIRs if needed
+    if int(fs_hrir) != int(sr):
+        gcd = np.gcd(int(sr), int(fs_hrir))
+        up, down = int(sr) // gcd, int(fs_hrir) // gcd
+        M, _, L = ir_data.shape
+        L_out = int(np.ceil(L * sr / fs_hrir))
+        ir_resampled = np.zeros((M, 2, L_out), dtype=np.float32)
+        for i in range(M):
+            for ch in range(2):
+                ir_resampled[i, ch] = resample_poly(
+                    ir_data[i, ch].astype(np.float32), up, down
+                )[:L_out]
+        ir_data = ir_resampled
+
+    hrir_len = ir_data.shape[2]
+    # Use 50% overlap-add with Hann window for smooth HRIR transitions.
+    # block_ms controls the HRIR update interval; the actual analysis frame
+    # is 2× block_ms with 50% hop, ensuring perfect reconstruction.
+    hop = max(1, int(sr * block_ms / 1000.0))
+    win_len = hop * 2  # 50% overlap
+    window = np.hanning(win_len).astype(np.float64)
+
+    def find_nearest_hrir(az, el):
+        qx = np.cos(el) * np.cos(az)
+        qy = np.cos(el) * np.sin(az)
+        qz = np.sin(el)
+        dots = src_cart[:, 0]*qx + src_cart[:, 1]*qy + src_cart[:, 2]*qz
+        return ir_data[int(np.argmax(dots))]  # (2, hrir_len)
+
+    out = np.zeros((2, T), dtype=np.float64)
+
+    # Overlap-add: each frame is win_len samples, hopped by hop.
+    # The Hann window with 50% overlap sums to 1.0 (perfect reconstruction).
+    n_frames = max(1, (T - win_len) // hop + 1)
+    # Handle tail: add one extra frame if needed
+    if (n_frames - 1) * hop + win_len < T:
+        n_frames += 1
+
+    for fi in range(n_frames):
+        start = fi * hop
+        end = min(start + win_len, T)
+        flen = end - start
+
+        # HRIR lookup at frame center
+        center = min(start + hop, T - 1)
+        az_med = float(np.median(az_s[start:min(start + hop, T)]))
+        el_med = float(np.median(el_s[start:min(start + hop, T)]))
+        hrir = find_nearest_hrir(az_med, el_med)
+
+        # Extended input for correct convolution at [start, end)
+        ext_start = max(0, start - hrir_len + 1)
+        ext_mono = mono[ext_start:end].astype(np.float64)
+        offset = start - ext_start
+
+        conv_L = fftconvolve(ext_mono, hrir[0])
+        conv_R = fftconvolve(ext_mono, hrir[1])
+
+        block_L = conv_L[offset:offset + flen]
+        block_R = conv_R[offset:offset + flen]
+
+        # Apply Hann window (truncated for last frame)
+        w = window[:flen] if flen == win_len else np.hanning(flen).astype(np.float64)
+        out[0, start:end] += w * block_L
+        out[1, start:end] += w * block_R
+
+    # Clip-protect only (do NOT unconditionally normalize — preserve distance attenuation)
+    peak = float(np.max(np.abs(out)) + 1e-9)
+    if peak > 1.0:
+        out = out / (peak * 1.01)
+    return out.astype(np.float32)
 
 
 def foa_to_binaural_sofa(foa_sn3d: np.ndarray, sr: int, sofa_path: str) -> np.ndarray:
@@ -540,16 +681,12 @@ def foa_to_binaural_sofa(foa_sn3d: np.ndarray, sr: int, sofa_path: str) -> np.nd
             for ch in range(2):
                 binlr[ch] += fftconvolve(spk_signal, hrir[ch], mode='full')[:binlr.shape[1]]
 
-        # Normalize by number of speakers
-        binlr /= len(vspk_dirs)
-
         # Trim to input length
         binlr = binlr[:, :T]
 
-        # Soft normalize
+        # Peak normalize (preserve spatial balance between L/R)
         peak = float(np.max(np.abs(binlr)) + 1e-9)
-        if peak > 1.0:
-            binlr = binlr / (peak * 1.01)
+        binlr = binlr / (peak * 1.01)  # always normalize to use full dynamic range
         return binlr.astype(np.float32)
     except Exception as e:
         import traceback
@@ -591,19 +728,21 @@ def render_stereo_pan_baseline(
     T = len(audio)
     audio = audio.astype(np.float32)
 
-    # Apply distance gain if available
-    if apply_gain and dist_s is not None:
-        d = dist_s[:T].astype(np.float32)
-        gain = 1.0 / np.maximum(d, 1.0)
-        gain = np.clip(gain, 0.2, 1.0)
+    # Apply distance gain from d_rel (relative distance)
+    if apply_gain and (d_rel_s is not None or dist_s is not None):
+        if d_rel_s is not None:
+            nd = np.clip(d_rel_s[:T].astype(np.float32), 0.0, 1.0)
+        else:
+            nd = np.clip((dist_s[:T] - 0.5) / 9.5, 0.0, 1.0)
+        gain = 1.0 - 0.7 * nd  # near=1.0, far=0.3
         audio = audio * gain
 
     # Constant-power panning
-    # Convention: az > 0 = LEFT, az < 0 = RIGHT (matches FOA/HRTF convention)
-    # pan: -1 = full left, +1 = full right  (DAW convention)
-    # So pan = -sin(az) to map +az(left) → negative pan → more L gain
+    # Pipeline: az > 0 = RIGHT side of image (atan2(x, z), x > 0 when pixel right of center)
+    # pan: +1 = full right, -1 = full left
+    # sin(az) > 0 when az > 0 (right) → pan > 0 → R louder ✓
     az = az_series[:T].astype(np.float32)
-    pan = -np.sin(az)  # negate: +az(left) → -pan → L louder
+    pan = np.sin(az)
 
     pan_angle = (pan + 1) * (np.pi / 4)  # 0 to pi/2
     L_gain = np.cos(pan_angle)
@@ -663,15 +802,15 @@ def render_stereo_pan_reverb_baseline(
         if apply_lpf:
             audio = apply_distance_gain_lpf(audio, sr, dist_s, d_rel_s)
         else:
-            # Just gain
-            d = dist_s[:T].astype(np.float32)
-            gain = 1.0 / np.maximum(d, 1.0)
-            gain = np.clip(gain, 0.2, 1.0)
+            # Just gain from d_rel
+            nd = np.clip(d_rel_s[:T].astype(np.float32), 0.0, 1.0)
+            gain = 1.0 - 0.7 * nd  # near=1.0, far=0.3
             audio = audio * gain
 
-    # Apply panning (same convention fix as render_stereo_pan_baseline)
+    # Apply panning (same convention as render_stereo_pan_baseline)
+    # Pipeline: az > 0 = RIGHT → sin(az) > 0 → pan > 0 → R louder ✓
     az = az_series[:T].astype(np.float32)
-    pan = -np.sin(az)  # negate: +az(left) → L louder
+    pan = np.sin(az)
     pan_angle = (pan + 1) * (np.pi / 4)
     L_gain = np.cos(pan_angle)
     R_gain = np.sin(pan_angle)
@@ -807,6 +946,8 @@ __all__ = [
     "write_foa_wav",
     "encode_many_to_foa",
     "render_foa_from_trajectory",
+    "render_binaural_from_trajectory",
+    "direct_binaural_sofa",
     "foa_to_stereo",
     "foa_to_binaural",
     "foa_to_binaural_sofa",
